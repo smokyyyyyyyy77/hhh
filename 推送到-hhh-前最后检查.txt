@@ -1,0 +1,33 @@
+推送到 hhh 前最后检查
+=====================
+
+当前目录已经清理掉以下不应入库内容：
+- build/
+- dist/
+- 发布版-轻量/
+- 发布版-轻量-node/
+- electron/dist/
+- electron/node_modules/
+- .DS_Store
+
+建议保留入库的核心文件：
+- .github/workflows/build-windows-light-exe.yml
+- .github/workflows/README-actions.txt
+- .gitignore
+- README.md
+- GITHUB-仓库-hhh-最少操作说明.txt
+- light-launcher.py
+- light-launcher.spec
+- requirements-light-launcher.txt
+- electron/app/合规报告访问门户生成器.html
+- electron/app/libs/
+- electron/app/fonts/
+- 发布版/使用说明.txt
+
+推送后怎么验证：
+1. 打开 GitHub 仓库 hhh 的 Actions 页面
+2. 找到工作流：Build Windows Light EXE
+3. 查看是否生成 artifact：合规报告访问门户生成器-轻量版-windows
+4. 下载其中的：
+   - 合规报告访问门户生成器-轻量版.exe
+   - 使用说明.txt

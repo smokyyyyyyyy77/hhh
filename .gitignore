@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+build/
+dist/
+.caxa/
+.caxa-stage/
+发布版/
+发布版-轻量/
+发布版-轻量-node/
+electron/dist/
+electron/node_modules/
+*.spec.bak

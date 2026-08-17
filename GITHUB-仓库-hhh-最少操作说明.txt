@@ -1,0 +1,41 @@
+GitHub 新仓库 hhh 最少操作说明
+================================
+
+目标：让仓库在 GitHub 上自动产出真正由 Windows runner 构建的 EXE。
+
+你后面只需要做这几步：
+
+1. 在 GitHub 上新建仓库：hhh
+2. 把当前目录内容推到该仓库
+3. 推送到 main 分支后，GitHub Actions 会自动开始构建
+4. 构建完成后，到 Actions 的 artifacts 下载：
+   - 合规报告访问门户生成器-轻量版.exe
+   - 使用说明.txt
+
+已为你准备好的文件：
+- .github/workflows/build-windows-light-exe.yml
+- .github/workflows/README-actions.txt
+- light-launcher.py
+- light-launcher.spec
+- requirements-light-launcher.txt
+- README.md
+- .gitignore
+
+工作流触发方式：
+- push 到 main 自动触发
+- GitHub 页面手动触发 workflow_dispatch
+- 发布 release 时也会上传 release asset
+
+工作流内已包含的验证：
+- 检查 dist/合规报告访问门户生成器-轻量版.exe 是否存在
+- artifact 缺失时直接报错，不会假成功
+
+构建成功后你能在 GitHub 上看到：
+- Actions artifact：合规报告访问门户生成器-轻量版-windows
+- 其中包含：
+  - 合规报告访问门户生成器-轻量版.exe
+  - 使用说明.txt
+
+注意：
+- 这一步必须在 GitHub 的 Windows runner 上执行，当前本机会话无法直接代替 GitHub 完成远程执行
+- 但仓库侧文件和 Windows 构建路径已经配置好
