@@ -60,8 +60,9 @@
   .radio-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
   .radio-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
-  .field input,.field select{border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;width:100%;font-size:13.5px}
-  .field input:focus,.field select:focus{outline:none;border-color:var(--blue)}
+  .field input,.field select,.field textarea{border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;width:100%;font-size:13.5px;font-family:inherit}
+  .field textarea{resize:vertical;min-height:64px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
 
   .upload-zone{border:2px dashed #c7d2fe;border-radius:12px;padding:18px;text-align:center;cursor:pointer;background:#fafbff;transition:background .15s;font-size:13px}
   .upload-zone:hover{background:#f0f4ff}
@@ -102,17 +103,42 @@
 
 <main>
   <h1 class="page-title">合规报告访问门户生成器</h1>
-  <p class="page-sub">导入 Word / txt 模板 → 调整 I Agree / Decline 按钮样式 → 生成封面 PDF（可内嵌正式报告）。封面内容 100% 来自导入的模板。</p>
+  <p class="page-sub">填写字段生成 SOC1 披露函封面（或导入自定义模板）→ 调整 I Agree / Decline 按钮样式 → 生成封面 PDF（可内嵌正式报告）。</p>
 
-  <!-- 1. 导入模板 -->
+  <!-- 1. 报告模板 -->
   <div class="panel">
-    <div class="panel-title"><span class="no">1</span>导入模板<span class="hint">支持 .docx / .txt / .md；用 [法律声明] 与 [用户许可协议] 两个标记分段</span></div>
-    <div class="import-row">
-      <button class="btn btn-primary btn-sm" id="btn-import">📂 导入模板文件（Word / 文本）</button>
-      <input type="file" id="file-tpl" accept=".txt,.md,.docx,text/plain" style="display:none">
-      <span class="import-hint" id="tpl-msg"></span>
+    <div class="panel-title"><span class="no">1</span>报告模板<span class="hint">内置 SOC1 披露函模板，或导入自定义模板（.docx / .txt / .md）</span></div>
+    <div class="radio-row" style="margin-bottom:12px">
+      <b style="font-size:13px">模板来源：</b>
+      <label><input type="radio" name="tpl-src" value="builtin" checked>内置 SOC1 披露函模板</label>
+      <label><input type="radio" name="tpl-src" value="import">导入自定义模板</label>
     </div>
-    <div class="import-hint" style="margin-top:8px">模板导入后直接用于封面（无需再编辑）；正文中可用 <code>[法律声明]</code> 与 <code>[用户许可协议]</code> 两个标记分段，无标记时全部作为法律声明。封面将按"法律声明 → 许可协议"的顺序原样呈现模板内容，预览见下方。</div>
+
+    <!-- 内置 SOC1 模板字段 -->
+    <div id="builtin-box">
+      <div class="tpl-grid">
+        <div class="field"><label>审计机构全称</label><input id="f-audit-firm" value="Ernst &amp; Young LLP"></div>
+        <div class="field"><label>审计机构简称</label><input id="f-audit-short" value="EY"></div>
+        <div class="field"><label>报告主体 / 客户公司</label><input id="f-client" value="Airwallex (Singapore) Pte. Ltd. and its affiliates"></div>
+        <div class="field"><label>客户简称</label><input id="f-client-short" value="Airwallex"></div>
+        <div class="field"><label>鉴证类型</label><input id="f-exam-type" value="SOC 1 Type 2"></div>
+        <div class="field"><label>被审系统描述</label><input id="f-system" value="Financial Infrastructure Platform System"></div>
+        <div class="field"><label>适用法律 / 管辖地</label><input id="f-law" value="Singapore"></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>关联公司清单（可选，将作为页脚注释）</label>
+        <textarea id="f-affiliates" rows="3">The Airwallex affiliates are Airwallex (Brasil) Ltda, Airwallex (Canada) International Payment Limited, Airwallex Capital Hong Kong Limited, Airwallex Capital Pty Ltd, Airwallex Capital (Singapore) Pte. Ltd., Airwallex (Cayman) Limited, Airwallex (Hong Kong) Limited, Airwallex (Israel) Ltd, Airwallex Japan K.K., Airwallex (Malaysia) Sdn Bhd., Airwallex (Netherlands) B.V., Airwallex (New Zealand) Limited, Airwallex Pty Ltd, Airwallex Services India Private Limited, Airwallex (Shanghai) Information Technology Co., Ltd., Airwallex (Shanghai) Network Technology Co., Ltd., Airwallex (UK) Limited, Airwallex US, LLC, AWX Lithuania, UAB and UniCard Solution Limited.</textarea>
+      </div>
+    </div>
+
+    <!-- 导入自定义模板 -->
+    <div id="import-box" style="display:none">
+      <div class="import-row">
+        <button class="btn btn-primary btn-sm" id="btn-import">📂 导入模板文件（Word / 文本）</button>
+        <input type="file" id="file-tpl" accept=".txt,.md,.docx,text/plain" style="display:none">
+        <span class="import-hint" id="tpl-msg"></span>
+      </div>
+      <div class="import-hint" style="margin-top:8px">正文中可用 <code>[法律声明]</code> 与 <code>[用户许可协议]</code> 两个标记分段，无标记时全部作为法律声明。封面将按"法律声明 → 许可协议"的顺序原样呈现模板内容。</div>
+    </div>
   </div>
 
   <!-- 2. 按钮样式 + 生成 -->
@@ -123,11 +149,11 @@
         <h4><span class="swatch" style="background:#0e7a3d"></span>I Agree 按钮</h4>
         <div class="style-grid">
           <div class="field"><label>文字</label><input id="ag-text" value="I Agree"></div>
-          <div class="field"><label>字号(pt)</label><input id="ag-fs" type="number" min="6" max="40" value="14"></div>
+          <div class="field"><label>字号(pt)</label><input id="ag-fs" type="number" min="6" max="40" value="16"></div>
           <div class="field"><label>宽度(pt)</label><input id="ag-w" type="number" min="40" max="300" value="130"></div>
           <div class="field"><label>高度(pt)</label><input id="ag-h" type="number" min="16" max="100" value="36"></div>
-          <div class="field"><label>背景色</label><input id="ag-bg" type="color" value="#0e7a3d"></div>
-          <div class="field"><label>文字色</label><input id="ag-fg" type="color" value="#ffffff"></div>
+          <div class="field"><label>背景色</label><input id="ag-bg" type="color" value="#ffe600"></div>
+          <div class="field"><label>文字色</label><input id="ag-fg" type="color" value="#000000"></div>
           <div class="field"><label>边框色</label><input id="ag-bd" type="color" value="#0e7a3d"></div>
           <div class="field"><label>边框宽(pt)</label><input id="ag-bw" type="number" min="0" max="6" value="1"></div>
         </div>
@@ -136,11 +162,11 @@
         <h4><span class="swatch" style="background:#9ca3af"></span>Decline 按钮</h4>
         <div class="style-grid">
           <div class="field"><label>文字</label><input id="de-text" value="Decline"></div>
-          <div class="field"><label>字号(pt)</label><input id="de-fs" type="number" min="6" max="40" value="14"></div>
+          <div class="field"><label>字号(pt)</label><input id="de-fs" type="number" min="6" max="40" value="16"></div>
           <div class="field"><label>宽度(pt)</label><input id="de-w" type="number" min="40" max="300" value="130"></div>
           <div class="field"><label>高度(pt)</label><input id="de-h" type="number" min="16" max="100" value="36"></div>
           <div class="field"><label>背景色</label><input id="de-bg" type="color" value="#9ca3af"></div>
-          <div class="field"><label>文字色</label><input id="de-fg" type="color" value="#ffffff"></div>
+          <div class="field"><label>文字色</label><input id="de-fg" type="color" value="#000000"></div>
           <div class="field"><label>边框色</label><input id="de-bd" type="color" value="#6b7280"></div>
           <div class="field"><label>边框宽(pt)</label><input id="de-bw" type="number" min="0" max="6" value="1"></div>
         </div>
@@ -211,6 +237,50 @@
 
 /* ---------- 状态 ---------- */
 const state = { uploaded: null, uploadedBytes: null, tplLegal: "", tplAgree: "" };
+
+/* ---------- 内置 SOC1 披露函模板 ---------- */
+const SOC1_TMPL_LEGAL = `{{auditFirm}} (“{{auditShort}}”) has prepared the attached report (the “Report”) for the sole benefit and use of {{client}} (collectively referred to as “{{clientShort}}”), and, for limited purposes in accordance with the requirements of the American Institute of Certified Public Accountants (“AICPA”) and the International Auditing and Assurance Standards Board (“IAASB”), {{clientShort}}’s existing clients and their auditors. In addition, certain prospective clients, identified by {{clientShort}} (collectively, each a “Recipient”), may have access to the Report subject to the terms of this agreement.
+
+Your access to the Report is subject to your agreement, on behalf of yourself and the Recipient, to the terms and conditions set forth below. Please read them carefully.
+
+By clicking on the “I ACCEPT” button below, you signify that you and the Recipient agree to be bound by these terms and conditions. Such acceptance and agreement shall be deemed to be as effective as a written signature by you, on behalf of yourself and the Recipient, and this agreement shall be deemed to satisfy any writings requirements of any applicable law, notwithstanding that the agreement is written and accepted electronically. Distribution or disclosure of any portion of the Report or any information or advice contained therein to persons other than {{clientShort}} is prohibited, except as provided below.
+
+1. {{auditShort}} was engaged by {{clientShort}} to perform a {{examType}} Examination of the controls of {{clientShort}}’s {{system}} to achieve the relevant control objectives specified in {{clientShort}}’s description (“SOC 1 engagement”), in accordance with attestation standards established by the AICPA and IAASB. The Recipient has requested {{clientShort}} to provide it with a copy of the Report prepared by {{auditShort}} in connection with such engagement.
+
+2. The Services were undertaken, and the Report was prepared, solely for the benefit and use of {{clientShort}}, its clients, and their auditors, and was not intended for any other purpose, including the use by prospective clients of {{clientShort}}. {{auditShort}} has made no representation or warranty to the Recipient as to the sufficiency of the Services or otherwise with respect to the Report. Had {{auditShort}} been engaged to perform additional services or procedures, other matters might have come to {{auditShort}}’s attention that would have been addressed in the Report.
+
+3. The Services did not (a) constitute an audit, review or examination of financial statements in accordance with generally accepted auditing standards of the AICPA and IAASB, (b) constitute an examination of prospective financial statements in accordance with applicable professional standards or (c) include procedures to detect fraud or illegal acts to test compliance with the laws or regulations of any jurisdiction.
+
+4. The Recipient (a) does not acquire any rights against {{auditShort}}, any other member firm of the global {{auditShort}} network, or any of their respective affiliates, partners, agents, representatives or employees (collectively, the “{{auditShort}} Parties”), and {{auditShort}} assumes no duty or liability to the Recipient, in connection with the Services or its access to the Report; (b) may not rely on the Report; and (c) will not contend that any provisions of applicable laws could invalidate or avoid any provision of this agreement.
+
+{{affiliates}}
+
+5. Except where compelled by legal process (of which the Recipient shall promptly inform {{auditShort}} so that {{auditShort}} may seek appropriate protection), the Recipient will not disclose, orally or in writing, any Report or any portion thereof, or make any reference to {{auditShort}} in connection therewith, in any public document or to any third party.
+
+6. The Recipient (for itself and its successors and assigns) hereby releases each of the {{auditShort}} Parties, from any and all claims or causes of action that the Recipient has, or hereafter may or shall have, against them in connection with the Report, the Recipient’s access to the Report, or {{auditShort}}’s performance of the Services. The Recipient shall indemnify, defend and hold harmless the {{auditShort}} Parties from and against all claims, liabilities, losses and expenses suffered or incurred by any of them arising out of or in connection with (a) any breach of this agreement by the Recipient or its representatives; and/or (b) any use or reliance on the Report by any party that obtains access to the Report, directly or indirectly, from or through the Recipient or at its request.
+
+7. This agreement shall be governed by, and construed in accordance with, the laws of {{law}} applicable to agreements made and fully to be performed therein by residents thereof.`;
+
+function builtinContent(){
+  const v = id => ($(id) || {}).value || "";
+  const map = {
+    "{{auditFirm}}": v("f-audit-firm") || "Ernst & Young LLP",
+    "{{auditShort}}": v("f-audit-short") || "EY",
+    "{{client}}": v("f-client") || "Airwallex (Singapore) Pte. Ltd. and its affiliates",
+    "{{clientShort}}": v("f-client-short") || "Airwallex",
+    "{{examType}}": v("f-exam-type") || "SOC 1 Type 2",
+    "{{system}}": v("f-system") || "Financial Infrastructure Platform System",
+    "{{law}}": v("f-law") || "Singapore",
+    "{{affiliates}}": (v("f-affiliates") || "").trim(),
+  };
+  let t = SOC1_TMPL_LEGAL;
+  for (const k in map) t = t.split(k).join(map[k]);
+  return { legal: t, agree: "" };
+}
+function tplSource(){ return (document.querySelector('input[name="tpl-src"]:checked') || {}).value || "builtin"; }
+function currentContent(){
+  return tplSource() === "builtin" ? builtinContent() : { legal: state.tplLegal, agree: state.tplAgree };
+}
 
 /* ---------- 工具 ---------- */
 const $ = id => document.getElementById(id);
@@ -309,9 +379,22 @@ function getBtnStyle(prefix){
     fs: Math.max(4, +$(prefix+"-fs").value || 12),
     w: Math.max(20, +$(prefix+"-w").value || 100),
     h: Math.max(12, +$(prefix+"-h").value || 30),
-    bg: $(prefix+"-bg").value, fg: $(prefix+"-fg").value,
-    bd: $(prefix+"-bd").value, bw: Math.max(0, +$(prefix+"-bw").value || 0),
+    bg: $(prefix+"-bg").value,
+    bgAlpha: 100,
+    fg: $(prefix+"-fg").value,
+    fgAlpha: 100,
+    bd: $(prefix+"-bd").value,
+    bdAlpha: 0,
+    bw: Math.max(0, +$(prefix+"-bw").value || 0),
+    shadow: { color: "#000000", alpha: 28, x: 0, y: 4, blur: 8, spread: 0 },
   };
+}
+function hexToRgbaCss(hex, alpha){
+  const h = String(hex || "").replace("#", "");
+  const n = parseInt(h, 16);
+  const a = Math.max(0, Math.min(100, alpha || 0)) / 100;
+  if (isNaN(n) || h.length !== 6) return `rgba(0,0,0,${a})`;
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
 }
 function getBtnLayout(){
   const agree = getBtnStyle("ag"), decline = getBtnStyle("de");
@@ -335,11 +418,13 @@ function hexToRgbLib(hex){
 
 /* ---------- 封面预览 ---------- */
 function renderPreview(){
-  const allPs = paragraphs(state.tplLegal).concat(paragraphs(state.tplAgree));
+  const content = currentContent();
+  const allPs = paragraphs(content.legal).concat(paragraphs(content.agree));
   const lay = getBtnLayout();
   const btnCss = (b, abs)=>{
     const pos = abs ? `position:absolute;left:${b.x}px;top:${b.yTop}px;` : "";
-    return `${pos}width:${b.w}px;height:${b.h}px;background:${b.bg};color:${b.fg};border:${b.bw}px solid ${b.bd};font-size:${b.fs}px`;
+    const shadow = b.shadow ? `box-shadow:${b.shadow.x}px ${b.shadow.y}px ${b.shadow.blur}px ${b.shadow.spread}px ${hexToRgbaCss(b.shadow.color, b.shadow.alpha)};` : "";
+    return `${pos}width:${b.w}px;height:${b.h}px;background:${hexToRgbaCss(b.bg, b.bgAlpha)};color:${hexToRgbaCss(b.fg, b.fgAlpha)};border:${b.bw}px solid ${hexToRgbaCss(b.bd, b.bdAlpha)};font-size:${b.fs}px;${shadow}`;
   };
   const buttons = lay.manual
     ? `<div class="cover-btn abs" style="${btnCss(lay.agree,true)}">${lay.agree.text}</div>
@@ -373,7 +458,8 @@ function generateCoverPDF(layout){
     doc.text(lines, M, y + size);
     y += lines.length * lh + 8;
   };
-  paragraphs(state.tplLegal).concat(paragraphs(state.tplAgree)).forEach(p=> para(p, 12));
+  const content = currentContent();
+  paragraphs(content.legal).concat(paragraphs(content.agree)).forEach(p=> para(p, 12));
   // ---- 绘制按钮视觉（在最后一页 / 手动模式第 1 页） ----
   const hex2rgb = hex => {
     const h = String(hex || "").replace("#", "");
@@ -385,11 +471,22 @@ function generateCoverPDF(layout){
     const [br,bg,bb] = hex2rgb(st.bg);
     const [fr,fg,fb] = hex2rgb(st.fg);
     const [dr,dg,db] = hex2rgb(st.bd);
+    if (st.shadow && st.shadow.alpha > 0){
+      const [sr,sg,sb] = hex2rgb(st.shadow.color);
+      doc.setFillColor(sr,sg,sb);
+      doc.setGState(new doc.GState({ opacity: Math.max(0, Math.min(100, st.shadow.alpha))/100 }));
+      doc.roundedRect(x + st.shadow.x, yTop + st.shadow.y, st.w, st.h, 4, 4, "F");
+      doc.setGState(new doc.GState({ opacity: 1 }));
+    }
     doc.setFillColor(br,bg,bb);
+    doc.setGState(new doc.GState({ opacity: Math.max(0, Math.min(100, st.bgAlpha))/100 }));
     doc.roundedRect(x, yTop, st.w, st.h, 4, 4, "F");
-    if (st.bw > 0){
+    doc.setGState(new doc.GState({ opacity: 1 }));
+    if (st.bw > 0 && st.bdAlpha > 0){
       doc.setDrawColor(dr,dg,db); doc.setLineWidth(st.bw);
+      doc.setGState(new doc.GState({ opacity: Math.max(0, Math.min(100, st.bdAlpha))/100 }));
       doc.roundedRect(x, yTop, st.w, st.h, 4, 4, "S");
+      doc.setGState(new doc.GState({ opacity: 1 }));
     }
     doc.setFont("SimHei","normal"); doc.setFontSize(st.fs);
     doc.setTextColor(fr,fg,fb);
@@ -624,7 +721,8 @@ function lockPdf(doc){
 /* ---------- 生成 ---------- */
 $("btn-gen").onclick = async ()=>{
   if (!window.jspdf || !window.SOC_FONT_B64){ toast("运行库加载失败，请确认 libs/ 与 fonts/ 目录完整"); return; }
-  if (!state.tplLegal.trim() && !state.tplAgree.trim()){ toast("请先导入模板（Word / 文本）"); return; }
+  const content = currentContent();
+  if (!content.legal.trim() && !content.agree.trim()){ toast("请填写模板字段或导入模板（Word / 文本）"); return; }
   try{
     const layout = getBtnLayout();
     const coverBytes = generateCoverPDF(layout);
@@ -694,12 +792,23 @@ function updateAll(){
   .forEach(id=> $(id).addEventListener("input", updateAll));
 document.querySelectorAll('input[name="agree-act"]').forEach(r=> r.addEventListener("change", updateAll));
 
+/* ---------- 模板来源切换 ---------- */
+function syncTplSource(){
+  const src = tplSource();
+  $("builtin-box").style.display = src === "builtin" ? "" : "none";
+  $("import-box").style.display = src === "import" ? "" : "none";
+  renderPreview();
+}
+document.querySelectorAll('input[name="tpl-src"]').forEach(r=> r.addEventListener("change", syncTplSource));
+["f-audit-firm","f-audit-short","f-client","f-client-short","f-exam-type","f-system","f-law","f-affiliates"]
+  .forEach(id=> $(id).addEventListener("input", renderPreview));
+
 /* ---------- 使用说明 ---------- */
 $("btn-about").onclick = ()=>{
   $("modal-box").innerHTML = `
     <h3>📖 使用说明</h3>
     <ol>
-      <li><b>导入模板</b>：点击「导入模板文件」上传 Word（.docx）/ .txt / .md 模板，或用 <code>[法律声明]</code> / <code>[用户许可协议]</code> 标记分段；也可直接粘贴文本。封面内容 100% 来自模板。</li>
+      <li><b>报告模板</b>：默认使用内置 SOC1 披露函模板，只需填写审计机构、客户公司、鉴证类型、被审系统、管辖法律等字段，正文自动生成；也可切换为导入 Word（.docx）/ .txt / .md 自定义模板。</li>
       <li><b>调整按钮样式</b>：I Agree / Decline 的文字、字号、宽高、颜色、边框均可调；位置可选自动（内容底部居中）或手动 X / Y（第 1 页，所见即所得），预览实时同步。</li>
       <li><b>生成封面</b>：可上传正式报告（.pdf，选填）——"I Agree" 打开内嵌报告（KPMG 原版做法）或显示本 PDF 内合并的隐藏报告页；Decline 关闭文档。</li>
     </ol>
@@ -711,7 +820,7 @@ $("modal").onclick = e=>{ if (e.target.id==="modal") $("modal").classList.remove
 
 /* ---------- 启动 ---------- */
 if (window.md5 && window.md5.rstrMD5) window.md5mod = window.md5;
-renderPreview();
+syncTplSource();
 </script>
 </body>
 </html>
