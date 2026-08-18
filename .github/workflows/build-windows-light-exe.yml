@@ -1,0 +1,62 @@
+name: Build Windows Light EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  release:
+    types: [published]
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-light-launcher.txt
+
+      - name: Build light launcher
+        run: pyinstaller --noconfirm light-launcher.spec
+
+      - name: Verify build output
+        shell: pwsh
+        run: |
+          if (!(Test-Path "dist/SOC 报告封面生成器-轻量版.exe")) {
+            throw "构建结果不存在：dist/SOC 报告封面生成器-轻量版.exe"
+          }
+          Get-Item "dist/SOC 报告封面生成器-轻量版.exe" | Format-List FullName,Length,LastWriteTime
+
+      - name: Prepare artifact folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item "dist/SOC 报告封面生成器-轻量版.exe" "release/SOC 报告封面生成器-轻量版.exe"
+          if (Test-Path "发布版/使用说明.txt") {
+            Copy-Item "发布版/使用说明.txt" "release/使用说明.txt"
+          }
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SOC-报告封面生成器-轻量版-windows
+          path: release/*
+          if-no-files-found: error
+
+      - name: Upload release asset
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/SOC 报告封面生成器-轻量版.exe
+            release/使用说明.txt

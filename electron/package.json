@@ -1,0 +1,65 @@
+{
+  "name": "soc-report-portal-generator",
+  "productName": "合规报告访问门户生成器",
+  "version": "1.0.0",
+  "description": "SOC 报告封面生成器：模板导入（持久化）· 报告性质 · I Agree/Decline 按钮 · 封面 PDF",
+  "main": "main.js",
+  "author": "compliance-tools",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "dist:mac": "electron-builder --mac zip",
+    "dist:win": "electron-builder --win portable",
+    "dist:win:zip": "electron-builder --win zip",
+    "dist:all": "electron-builder --mac zip --win portable"
+  },
+  "devDependencies": {
+    "electron": "43.3.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.compliancetools.socportal",
+    "productName": "合规报告访问门户生成器",
+    "files": [
+      "main.js",
+      "preload.js",
+      "app/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "electronLanguages": [
+      "zh-CN",
+      "en-US"
+    ],
+    "compression": "maximum",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-win-${arch}.${ext}"
+    },
+    "portable": {
+      "requestExecutionLevel": "user"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.business",
+      "artifactName": "${productName}-${version}-mac-${arch}.${ext}"
+    }
+  }
+}

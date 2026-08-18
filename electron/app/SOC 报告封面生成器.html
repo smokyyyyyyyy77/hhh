@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOC 报告封面生成器</title>
+<style>
+  :root{
+    --blue:#00338D; --dark:#00205B; --ink:#1f2430; --muted:#6b7280;
+    --line:#e5e7eb; --bg:#f3f5f9; --card:#fff; --ok:#0e7a3d;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+  button{font-family:inherit;cursor:pointer}
+  input,select,textarea{font-family:inherit}
+
+  .topbar{position:sticky;top:0;z-index:50;background:var(--dark);color:#fff;display:flex;align-items:center;gap:12px;padding:10px 22px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+  .topbar .logo{font-size:18px;font-weight:700}
+  .topbar .logo small{font-weight:400;opacity:.75;margin-left:8px;font-size:12px}
+  .topbar .spacer{flex:1}
+  .topbar a{color:#fff;font-size:13px;text-decoration:none;opacity:.9}
+  .topbar a:hover{text-decoration:underline}
+
+  main{max-width:1060px;margin:0 auto;padding:24px 20px 60px}
+  .page-title{font-size:22px;font-weight:700;margin-bottom:4px}
+  .page-sub{color:var(--muted);margin-bottom:18px}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-bottom:16px;box-shadow:0 2px 10px rgba(15,30,60,.04)}
+  .panel-title{font-size:15px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .panel-title .no{background:var(--blue);color:#fff;width:22px;height:22px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:12px;flex:none}
+  .panel-title .hint{font-weight:400;font-size:12px;color:var(--muted)}
+
+  .btn{border:none;border-radius:9px;padding:10px 20px;font-size:14px;font-weight:600;transition:filter .15s}
+  .btn:hover{filter:brightness(1.07)}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+  .btn-sm{font-size:12px;padding:5px 12px}
+
+  .import-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .import-hint{font-size:12px;color:var(--muted)}
+  .tpl-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:860px){.tpl-grid{grid-template-columns:1fr}}
+  .tpl-box{border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .tpl-head{background:#f8fafc;padding:7px 12px;font-size:12.5px;font-weight:700;border-bottom:1px solid var(--line)}
+  .tpl-box textarea{width:100%;height:230px;border:none;resize:vertical;padding:11px;font-size:12.8px;line-height:1.7}
+  .tpl-box textarea:focus{outline:none}
+
+  .btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:860px){.btn-grid{grid-template-columns:1fr}}
+  .btn-style{border:1.5px solid var(--line);border-radius:10px;padding:12px 14px}
+  .btn-style h4{font-size:13px;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .swatch{width:14px;height:14px;border-radius:4px;border:1px solid #ccc;display:inline-block}
+  .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .style-grid .field label{font-size:11px}
+  .style-grid .field input{padding:5px 8px;font-size:12.5px}
+  .style-grid .field input[type=color]{padding:1px;height:30px;cursor:pointer}
+  .pos-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
+  .pos-row .field{max-width:150px}
+  .pos-row .field input{padding:5px 8px;font-size:12.5px}
+  .radio-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px}
+  .radio-row label{display:flex;align-items:center;gap:6px;cursor:pointer}
+  .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+  .field input,.field select,.field textarea{border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;width:100%;font-size:13.5px;font-family:inherit}
+  .field textarea{resize:vertical;min-height:64px}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--blue)}
+
+  .upload-zone{border:2px dashed #c7d2fe;border-radius:12px;padding:18px;text-align:center;cursor:pointer;background:#fafbff;transition:background .15s;font-size:13px}
+  .upload-zone:hover{background:#f0f4ff}
+  .file-info{display:none;align-items:center;gap:10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:9px 14px;margin-top:10px;font-size:12.5px}
+  .file-info.show{display:flex}
+  .file-info .nm{font-weight:600;word-break:break-all}
+  .file-info .rm{margin-left:auto;color:var(--danger,#b91c1c);background:none;border:none;font-size:12px}
+
+  .gen-row{display:flex;gap:12px;margin-top:14px;align-items:center;flex-wrap:wrap}
+
+  .preview-wrap{background:#e8ebf0;border-radius:12px;padding:20px}
+  .preview-wrap>div.hint{font-size:12px;color:var(--muted);margin-bottom:10px}
+  .cover-page{position:relative;background:#fff;width:595px;max-width:100%;min-height:842px;margin:0 auto;box-shadow:0 6px 24px rgba(15,30,60,.18);font-size:12.5px;color:#111827;overflow:hidden}
+  .cover-body{padding:48px 56px;min-height:700px}
+  .cover-body p{margin-bottom:10px;text-align:justify}
+  .cover-btns{display:flex;justify-content:center;gap:12px;padding:6px 32px 18px}
+  .cover-btn{display:flex;align-items:center;justify-content:center;font-weight:700;font-family:Helvetica,Arial,"PingFang SC",sans-serif;text-align:center;white-space:nowrap;border-radius:6px;box-sizing:border-box}
+  .cover-btn.abs{position:absolute}
+
+  .toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);background:#111827;color:#fff;padding:11px 22px;border-radius:10px;font-size:14px;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:opacity .25s;pointer-events:none}
+  .toast.show{opacity:1}
+  .modal-mask{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:100;display:none;align-items:center;justify-content:center}
+  .modal-mask.show{display:flex}
+  .modal{background:#fff;border-radius:14px;max-width:640px;width:92%;max-height:80vh;overflow:auto;padding:24px 28px}
+  .modal h3{margin-bottom:12px}
+  .modal p,.modal li{font-size:13.5px;margin-bottom:8px}
+  .modal .close{margin-top:14px}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:18px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">SOC 报告封面生成器<small>导入模板 · 封面生成</small></div>
+  <div class="spacer"></div>
+  <a href="javascript:void(0)" id="btn-about">使用说明</a>
+</header>
+
+<main>
+  <h1 class="page-title">SOC 报告封面生成器</h1>
+  <p class="page-sub">填写字段生成 SOC1 披露函封面（或导入自定义模板）→ 调整 I Agree / Decline 按钮样式 → 生成封面 PDF（可内嵌正式报告）。</p>
+
+  <!-- 1. 报告模板 -->
+  <div class="panel">
+    <div class="panel-title"><span class="no">1</span>报告模板<span class="hint">内置 SOC1 披露函模板，或导入自定义模板（.docx / .txt / .md）</span></div>
+    <div class="radio-row" style="margin-bottom:12px">
+      <b style="font-size:13px">模板来源：</b>
+      <label><input type="radio" name="tpl-src" value="builtin" checked>内置 SOC1 披露函模板</label>
+      <label><input type="radio" name="tpl-src" value="import">导入自定义模板</label>
+    </div>
+
+    <!-- 内置 SOC1 模板字段 -->
+    <div id="builtin-box">
+      <div class="tpl-grid">
+        <div class="field"><label>审计机构全称</label><input id="f-audit-firm" value="Ernst &amp; Young LLP"></div>
+        <div class="field"><label>审计机构简称</label><input id="f-audit-short" value="EY"></div>
+        <div class="field"><label>报告主体 / 客户公司</label><input id="f-client" value="Airwallex (Singapore) Pte. Ltd. and its affiliates"></div>
+        <div class="field"><label>客户简称</label><input id="f-client-short" value="Airwallex"></div>
+        <div class="field"><label>鉴证类型</label><input id="f-exam-type" value="SOC 1 Type 2"></div>
+        <div class="field"><label>被审系统描述</label><input id="f-system" value="Financial Infrastructure Platform System"></div>
+        <div class="field"><label>适用法律 / 管辖地</label><input id="f-law" value="Singapore"></div>
+      </div>
+      <div class="radio-row" style="margin-top:10px">
+        <b style="font-size:13px">内置模板语言：</b>
+        <label><input type="radio" name="tpl-lang" value="en" checked>英文版</label>
+        <label><input type="radio" name="tpl-lang" value="zh">中文版</label>
+      </div>
+      <div class="field" style="margin-top:10px"><label>关联公司清单（可选，将作为页脚注释）</label>
+        <textarea id="f-affiliates" rows="3">The Airwallex affiliates are Airwallex (Brasil) Ltda, Airwallex (Canada) International Payment Limited, Airwallex Capital Hong Kong Limited, Airwallex Capital Pty Ltd, Airwallex Capital (Singapore) Pte. Ltd., Airwallex (Cayman) Limited, Airwallex (Hong Kong) Limited, Airwallex (Israel) Ltd, Airwallex Japan K.K., Airwallex (Malaysia) Sdn Bhd., Airwallex (Netherlands) B.V., Airwallex (New Zealand) Limited, Airwallex Pty Ltd, Airwallex Services India Private Limited, Airwallex (Shanghai) Information Technology Co., Ltd., Airwallex (Shanghai) Network Technology Co., Ltd., Airwallex (UK) Limited, Airwallex US, LLC, AWX Lithuania, UAB and UniCard Solution Limited.</textarea>
+      </div>
+    </div>
+
+    <!-- 导入自定义模板 -->
+    <div id="import-box" style="display:none">
+      <div class="import-row">
+        <button class="btn btn-primary btn-sm" id="btn-import">📂 导入模板文件（Word / 文本）</button>
+        <input type="file" id="file-tpl" accept=".txt,.md,.docx,text/plain" style="display:none">
+        <span class="import-hint" id="tpl-msg"></span>
+      </div>
+      <div class="import-hint" style="margin-top:8px">正文中可用 <code>[法律声明]</code> 与 <code>[用户许可协议]</code> 两个标记分段，无标记时全部作为法律声明。封面将按"法律声明 → 许可协议"的顺序原样呈现模板内容。</div>
+    </div>
+  </div>
+
+  <!-- 2. 按钮样式 + 生成 -->
+  <div class="panel">
+    <div class="panel-title"><span class="no">2</span>I Agree / Decline 按钮样式<span class="hint">样式可手动调整，实时反映在下方预览</span></div>
+    <div class="btn-grid">
+      <div class="btn-style">
+        <h4><span class="swatch" style="background:#0e7a3d"></span>I Agree 按钮</h4>
+        <div class="style-grid">
+          <div class="field"><label>文字</label><input id="ag-text" value="I Agree"></div>
+          <div class="field"><label>字号(pt)</label><input id="ag-fs" type="number" min="6" max="40" value="16"></div>
+          <div class="field"><label>宽度(pt)</label><input id="ag-w" type="number" min="40" max="300" value="130"></div>
+          <div class="field"><label>高度(pt)</label><input id="ag-h" type="number" min="16" max="100" value="36"></div>
+          <div class="field"><label>背景色</label><input id="ag-bg" type="color" value="#ffe600"></div>
+          <div class="field"><label>文字色</label><input id="ag-fg" type="color" value="#000000"></div>
+          <div class="field"><label>边框色</label><input id="ag-bd" type="color" value="#0e7a3d"></div>
+          <div class="field"><label>边框宽(pt)</label><input id="ag-bw" type="number" min="0" max="6" value="1"></div>
+        </div>
+      </div>
+      <div class="btn-style">
+        <h4><span class="swatch" style="background:#9ca3af"></span>Decline 按钮</h4>
+        <div class="style-grid">
+          <div class="field"><label>文字</label><input id="de-text" value="Decline"></div>
+          <div class="field"><label>字号(pt)</label><input id="de-fs" type="number" min="6" max="40" value="16"></div>
+          <div class="field"><label>宽度(pt)</label><input id="de-w" type="number" min="40" max="300" value="130"></div>
+          <div class="field"><label>高度(pt)</label><input id="de-h" type="number" min="16" max="100" value="36"></div>
+          <div class="field"><label>背景色</label><input id="de-bg" type="color" value="#9ca3af"></div>
+          <div class="field"><label>文字色</label><input id="de-fg" type="color" value="#000000"></div>
+          <div class="field"><label>边框色</label><input id="de-bd" type="color" value="#6b7280"></div>
+          <div class="field"><label>边框宽(pt)</label><input id="de-bw" type="number" min="0" max="6" value="1"></div>
+        </div>
+      </div>
+    </div>
+    <div class="pos-row">
+      <div class="field" style="max-width:230px"><label>按钮位置</label>
+        <select id="sel-pos">
+          <option value="auto">自动（内容底部居中）</option>
+          <option value="manual">手动（自定义 X / Y，第 1 页）</option>
+        </select>
+      </div>
+      <div class="field" id="pos-x1"><label>I Agree X(距左)</label><input id="ag-x" type="number" min="0" max="595" value="180"></div>
+      <div class="field" id="pos-y1"><label>I Agree Y(距上)</label><input id="ag-y" type="number" min="0" max="842" value="700"></div>
+      <div class="field" id="pos-x2"><label>Decline X(距左)</label><input id="de-x" type="number" min="0" max="595" value="320"></div>
+      <div class="field" id="pos-y2"><label>Decline Y(距上)</label><input id="de-y" type="number" min="0" max="842" value="700"></div>
+    </div>
+    <div class="pos-row" style="border-top:none;padding-top:0">
+      <div class="radio-row">
+        <b style="font-size:13px">点 "I Agree" 后：</b>
+        <label><input type="radio" name="agree-act" value="gtoe" checked>打开内嵌在 PDF 里的正式报告文件</label>
+        <label><input type="radio" name="agree-act" value="ocg">显示本 PDF 内合并的报告页（隐藏页）</label>
+      </div>
+    </div>
+    <div class="upload-zone" id="drop-zone" style="margin-top:12px">
+      <div>📄 上传正式报告文件（选填，.pdf）— 供 "I Agree" 打开或隐藏页使用</div>
+      <input type="file" id="file-report" accept=".pdf,application/pdf" style="display:none">
+    </div>
+    <div class="file-info" id="file-info">
+      <span>📎</span><div><span class="nm" id="file-name"></span> <span class="sz" style="color:var(--muted)" id="file-size"></span></div>
+      <button class="rm" id="file-remove">移除</button>
+    </div>
+    <div class="gen-row">
+      <button class="btn btn-primary" id="btn-gen">⬇ 生成封面 PDF</button>
+      <span style="font-size:12px;color:var(--muted)">输出：封面（含模板正文 + I Agree/Decline 按钮）</span>
+    </div>
+  </div>
+
+  <!-- 3. 预览 -->
+  <div class="panel">
+    <div class="panel-title"><span class="no">3</span>封面实时预览<span class="hint">内容完全来自模板；模板为空时预览为空白页</span></div>
+    <div class="preview-wrap">
+      <div class="hint">与生成 PDF 的版式一致</div>
+      <div class="cover-page" id="cover-preview"></div>
+    </div>
+  </div>
+</main>
+
+<footer>SOC 报告封面生成器 · 按钮动作需 Adobe Acrobat / Reader 支持</footer>
+
+<div class="modal-mask" id="modal"><div class="modal" id="modal-box"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="libs/jspdf.umd.min.js"></script>
+<script src="libs/pdf-lib.min.js"></script>
+<script src="libs/fontkit.umd.min.js"></script>
+<script src="libs/md5.js"></script>
+<script src="libs/pako.min.js"></script>
+<script src="fonts/font.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+ * SOC 报告封面生成器（精简版）
+ * 导入模板（Word/txt/md）→ 调整 I Agree/Decline 按钮样式 → 生成封面 PDF
+ * 封面 100% 来自模板正文 + 按钮；无内置版式、无模板库、无报告信息表单
+ * 按钮 = AcroForm 按钮字段(FT=/Btn) + /A 动作（/GoToE 内嵌报告 / JS 显示 OCG 隐藏页 / /Close）
+ * ===================================================================== */
+
+/* ---------- 状态 ---------- */
+const state = { uploaded: null, uploadedBytes: null, tplLegal: "", tplAgree: "" };
+
+/* ---------- 内置 SOC1 披露函模板 ---------- */
+const SOC1_TMPL_EN = `{{auditFirm}} (“{{auditShort}}”) has prepared the attached report (the “Report”) for the sole benefit and use of {{client}} (collectively referred to as “{{clientShort}}”), and, for limited purposes in accordance with the requirements of the American Institute of Certified Public Accountants (“AICPA”) and the International Auditing and Assurance Standards Board (“IAASB”), {{clientShort}}’s existing clients and their auditors. In addition, certain prospective clients, identified by {{clientShort}} (collectively, each a “Recipient”), may have access to the Report subject to the terms of this agreement.
+
+Your access to the Report is subject to your agreement, on behalf of yourself and the Recipient, to the terms and conditions set forth below. Please read them carefully.
+
+By clicking on the “I ACCEPT” button below, you signify that you and the Recipient agree to be bound by these terms and conditions. Such acceptance and agreement shall be deemed to be as effective as a written signature by you, on behalf of yourself and the Recipient, and this agreement shall be deemed to satisfy any writings requirements of any applicable law, notwithstanding that the agreement is written and accepted electronically. Distribution or disclosure of any portion of the Report or any information or advice contained therein to persons other than {{clientShort}} is prohibited, except as provided below.
+
+1. {{auditShort}} was engaged by {{clientShort}} to perform a {{examType}} Examination of the controls of {{clientShort}}’s {{system}} to achieve the relevant control objectives specified in {{clientShort}}’s description (“SOC 1 engagement”), in accordance with attestation standards established by the AICPA and IAASB. The Recipient has requested {{clientShort}} to provide it with a copy of the Report prepared by {{auditShort}} in connection with such engagement.
+
+2. The Services were undertaken, and the Report was prepared, solely for the benefit and use of {{clientShort}}, its clients, and their auditors, and was not intended for any other purpose, including the use by prospective clients of {{clientShort}}. {{auditShort}} has made no representation or warranty to the Recipient as to the sufficiency of the Services or otherwise with respect to the Report. Had {{auditShort}} been engaged to perform additional services or procedures, other matters might have come to {{auditShort}}’s attention that would have been addressed in the Report.
+
+3. The Services did not (a) constitute an audit, review or examination of financial statements in accordance with generally accepted auditing standards of the AICPA and IAASB, (b) constitute an examination of prospective financial statements in accordance with applicable professional standards or (c) include procedures to detect fraud or illegal acts to test compliance with the laws or regulations of any jurisdiction.
+
+4. The Recipient (a) does not acquire any rights against {{auditShort}}, any other member firm of the global {{auditShort}} network, or any of their respective affiliates, partners, agents, representatives or employees (collectively, the “{{auditShort}} Parties”), and {{auditShort}} assumes no duty or liability to the Recipient, in connection with the Services or its access to the Report; (b) may not rely on the Report; and (c) will not contend that any provisions of applicable laws could invalidate or avoid any provision of this agreement.
+
+{{affiliates}}
+
+5. Except where compelled by legal process (of which the Recipient shall promptly inform {{auditShort}} so that {{auditShort}} may seek appropriate protection), the Recipient will not disclose, orally or in writing, any Report or any portion thereof, or make any reference to {{auditShort}} in connection therewith, in any public document or to any third party.
+
+6. The Recipient (for itself and its successors and assigns) hereby releases each of the {{auditShort}} Parties, from any and all claims or causes of action that the Recipient has, or hereafter may or shall have, against them in connection with the Report, the Recipient’s access to the Report, or {{auditShort}}’s performance of the Services. The Recipient shall indemnify, defend and hold harmless the {{auditShort}} Parties from and against all claims, liabilities, losses and expenses suffered or incurred by any of them arising out of or in connection with (a) any breach of this agreement by the Recipient or its representatives; and/or (b) any use or reliance on the Report by any party that obtains access to the Report, directly or indirectly, from or through the Recipient or at its request.
+
+7. This agreement shall be governed by, and construed in accordance with, the laws of {{law}} applicable to agreements made and fully to be performed therein by residents thereof.`;
+
+const SOC1_TMPL_ZH = `{{auditFirm}}（“{{auditShort}}”）已编制随附报告（简称“本报告”），仅供 {{client}} 使用和受益（以下统称“{{clientShort}}”）。此外，根据美国注册会计师协会（“AICPA”）及国际审计与鉴证准则理事会（“IAASB”）的相关要求，在有限目的范围内，{{clientShort}} 的现有客户及其审计师亦可查阅本报告。经 {{clientShort}} 指定的某些潜在客户（以下各称“接收方”）也可在遵守本协议条款的前提下获得本报告的访问权限。
+
+您访问本报告，即表示您代表您本人及接收方同意接受以下条款与条件的约束。请仔细阅读。
+
+点击下方 “I ACCEPT” 按钮，即表示您和接收方同意受本等条款和条件约束。该等接受与同意应视为与您代表您本人及接收方作出的书面签署具有同等法律效力，并应视为满足任何适用法律对书面形式的要求，尽管本协议系以电子形式书写并接受。除下文另有规定外，严禁向 {{clientShort}} 之外的任何人士分发或披露本报告的任何部分，或其中包含的任何信息或建议。
+
+1. {{auditShort}} 受 {{clientShort}} 委托，按照 AICPA 和 IAASB 制定的鉴证标准，就 {{clientShort}} 的 {{system}} 控制执行 {{examType}} 鉴证，以实现 {{clientShort}} 系统说明中列示的相关控制目标（以下简称 “SOC 1 业务”）。接收方已要求 {{clientShort}} 向其提供 {{auditShort}} 就该业务出具的本报告副本。
+
+2. 该等服务及本报告仅为 {{clientShort}}、其客户及其审计师的利益和使用而实施和编制，并非为任何其他目的而设，包括 {{clientShort}} 潜在客户的使用。{{auditShort}} 未就服务的充分性或本报告向接收方作出任何陈述或保证。若 {{auditShort}} 受聘执行额外服务或程序，则可能会注意到其他事项，并可能在本报告中予以反映。
+
+3. 该等服务并不构成：（a）按照 AICPA 和 IAASB 公认审计准则进行的财务报表审计、审阅或检查；（b）按照适用专业准则进行的预测性财务报表检查；或（c）为发现舞弊或违法行为，或测试对任何司法辖区法律法规遵守情况而执行的程序。
+
+4. 接收方：（a）不取得针对 {{auditShort}}、{{auditShort}} 全球网络中的任何其他成员所，或其各自关联方、合伙人、代理人、代表或员工（以下统称“{{auditShort}} 各方”）的任何权利，且 {{auditShort}} 对接收方就该等服务或其访问本报告不承担任何义务或责任；（b）不得依赖本报告；（c）不得主张适用法律的任何规定可使本协议任何条款无效或失效。
+
+{{affiliates}}
+
+5. 除非法律程序强制要求（在此情况下，接收方应及时通知 {{auditShort}}，以便 {{auditShort}} 寻求适当保护），否则接收方不得以口头或书面形式向任何第三方披露本报告或其任何部分，也不得在任何公开文件或对第三方的沟通中提及 {{auditShort}}。
+
+6. 接收方（代表其自身及其继受人和受让人）特此免除 {{auditShort}} 各方因本报告、接收方对本报告的访问，或 {{auditShort}} 执行该等服务而产生或与之相关的一切索赔或诉因。接收方应就以下事项引起或相关的全部索赔、责任、损失及费用，对 {{auditShort}} 各方作出赔偿、抗辩并使其免受损害：（a）接收方或其代表违反本协议；和/或（b）任何直接或间接从接收方处、通过接收方或应其要求获得本报告访问权限的一方，对本报告的任何使用或依赖。
+
+7. 本协议受 {{law}} 法律管辖并依其解释，该等法律适用于由当地居民订立并完全履行的协议。`;
+
+const BUILTIN_DEFAULTS = {
+  en: {
+    auditFirm: "Ernst & Young LLP",
+    auditShort: "EY",
+    client: "Airwallex (Singapore) Pte. Ltd. and its affiliates",
+    clientShort: "Airwallex",
+    examType: "SOC 1 Type 2",
+    system: "Financial Infrastructure Platform System",
+    law: "Singapore",
+    affiliates: "The Airwallex affiliates are Airwallex (Brasil) Ltda, Airwallex (Canada) International Payment Limited, Airwallex Capital Hong Kong Limited, Airwallex Capital Pty Ltd, Airwallex Capital (Singapore) Pte. Ltd., Airwallex (Cayman) Limited, Airwallex (Hong Kong) Limited, Airwallex (Israel) Ltd, Airwallex Japan K.K., Airwallex (Malaysia) Sdn Bhd., Airwallex (Netherlands) B.V., Airwallex (New Zealand) Limited, Airwallex Pty Ltd, Airwallex Services India Private Limited, Airwallex (Shanghai) Information Technology Co., Ltd., Airwallex (Shanghai) Network Technology Co., Ltd., Airwallex (UK) Limited, Airwallex US, LLC, AWX Lithuania, UAB and UniCard Solution Limited.",
+    agreeText: "I Agree",
+    declineText: "Decline",
+  },
+  zh: {
+    auditFirm: "安永会计师事务所",
+    auditShort: "安永",
+    client: "空中云汇（新加坡）私人有限公司及其关联公司",
+    clientShort: "空中云汇",
+    examType: "SOC 1 第二类报告",
+    system: "金融基础设施平台系统",
+    law: "新加坡",
+    affiliates: "空中云汇关联公司包括：Airwallex (Brasil) Ltda、Airwallex (Canada) International Payment Limited、Airwallex Capital Hong Kong Limited、Airwallex Capital Pty Ltd、Airwallex Capital (Singapore) Pte. Ltd.、Airwallex (Cayman) Limited、Airwallex (Hong Kong) Limited、Airwallex (Israel) Ltd、Airwallex Japan K.K.、Airwallex (Malaysia) Sdn Bhd.、Airwallex (Netherlands) B.V.、Airwallex (New Zealand) Limited、Airwallex Pty Ltd、Airwallex Services India Private Limited、Airwallex (Shanghai) Information Technology Co., Ltd.、Airwallex (Shanghai) Network Technology Co., Ltd.、Airwallex (UK) Limited、Airwallex US, LLC、AWX Lithuania, UAB 以及 UniCard Solution Limited。",
+    agreeText: "同意",
+    declineText: "拒绝",
+  }
+};
+const BUILTIN_FIELDS = [
+  ["f-audit-firm", "auditFirm"],
+  ["f-audit-short", "auditShort"],
+  ["f-client", "client"],
+  ["f-client-short", "clientShort"],
+  ["f-exam-type", "examType"],
+  ["f-system", "system"],
+  ["f-law", "law"],
+  ["f-affiliates", "affiliates"],
+];
+let lastBuiltinLang = "en";
+function builtinLang(){ return (document.querySelector('input[name="tpl-lang"]:checked') || {}).value || "en"; }
+function syncBuiltinFieldDefaults(force){
+  const prev = BUILTIN_DEFAULTS[lastBuiltinLang] || BUILTIN_DEFAULTS.en;
+  const nextLang = builtinLang();
+  const next = BUILTIN_DEFAULTS[nextLang] || BUILTIN_DEFAULTS.en;
+  BUILTIN_FIELDS.forEach(([id, key])=>{
+    const el = $(id); if (!el) return;
+    const val = el.value;
+    if (force || val === prev[key] || val === "") el.value = next[key];
+  });
+  const ag = $("ag-text"), de = $("de-text");
+  if (ag && (force || ag.value === prev.agreeText || ag.value === "")) ag.value = next.agreeText;
+  if (de && (force || de.value === prev.declineText || de.value === "")) de.value = next.declineText;
+  lastBuiltinLang = nextLang;
+}
+function builtinContent(){
+  const v = id => ($(id) || {}).value || "";
+  const defs = BUILTIN_DEFAULTS[builtinLang()] || BUILTIN_DEFAULTS.en;
+  const map = {
+    "{{auditFirm}}": v("f-audit-firm") || defs.auditFirm,
+    "{{auditShort}}": v("f-audit-short") || defs.auditShort,
+    "{{client}}": v("f-client") || defs.client,
+    "{{clientShort}}": v("f-client-short") || defs.clientShort,
+    "{{examType}}": v("f-exam-type") || defs.examType,
+    "{{system}}": v("f-system") || defs.system,
+    "{{law}}": v("f-law") || defs.law,
+    "{{affiliates}}": (v("f-affiliates") || defs.affiliates).trim(),
+  };
+  let t = (builtinLang() === "zh" ? SOC1_TMPL_ZH : SOC1_TMPL_EN);
+  for (const k in map) t = t.split(k).join(map[k]);
+  return { legal: t, agree: "" };
+}
+function tplSource(){ return (document.querySelector('input[name="tpl-src"]:checked') || {}).value || "builtin"; }
+function currentContent(){
+  return tplSource() === "builtin" ? builtinContent() : { legal: state.tplLegal, agree: state.tplAgree };
+}
+
+/* ---------- 工具 ---------- */
+const $ = id => document.getElementById(id);
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2800);
+}
+function nowStamp(){
+  const d = new Date(); const p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+}
+const paragraphs = text => String(text).split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+
+/* ---------- 模板导入 ---------- */
+function parseTemplateText(text){
+  const lines = String(text).split(/\r?\n/);
+  const parts = { legal:[], agree:[], found:false };
+  let section = null;
+  for (const ln of lines){
+    const t = ln.trim();
+    if (t && t.length < 30 && (/法律声明/.test(t) && /[\[【(（]|={2,}/.test(t))){
+      section = "legal"; parts.found = true; continue;
+    }
+    if (t && t.length < 30 && /许可协议|使用条款|授权条款/.test(t) && /[\[【(（]|={2,}/.test(t)){
+      section = "agree"; parts.found = true; continue;
+    }
+    if (section === "agree") parts.agree.push(ln);
+    else parts.legal.push(ln);
+  }
+  return { legal: parts.legal.join("\n").trim(), agree: parts.agree.join("\n").trim(), found: parts.found };
+}
+function handleTemplateText(text, fromName){
+  const p = parseTemplateText(text);
+  state.tplLegal = p.legal || "";
+  state.tplAgree = p.agree || "";
+  $("tpl-msg").textContent = `已导入：${fromName}（共 ${paragraphs(p.legal).length + paragraphs(p.agree).length} 段内容）${p.found ? "" : "，未识别分段标记，全部作为法律声明"}`;
+  toast(`模板已导入：${fromName}`);
+  renderPreview();
+}
+/* docx 支持：解析 zip → 取 word/document.xml → 提取 <w:t> 文本 */
+function docxToText(bytes){
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 70000); i--){
+    if (dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if (eocd < 0) return null;
+  const cdCount = dv.getUint16(eocd + 10, true);
+  const cdOffset = dv.getUint32(eocd + 16, true);
+  let off = cdOffset;
+  const dec = new TextDecoder();
+  for (let i = 0; i < cdCount; i++){
+    if (dv.getUint32(off, true) !== 0x02014b50) return null;
+    const method = dv.getUint16(off + 10, true);
+    const csize = dv.getUint32(off + 20, true);
+    const nl = dv.getUint16(off + 28, true);
+    const el = dv.getUint16(off + 30, true);
+    const cl = dv.getUint16(off + 32, true);
+    const lho = dv.getUint32(off + 42, true);
+    const name = dec.decode(bytes.subarray(off + 46, off + 46 + nl));
+    if (name === "word/document.xml" || name.endsWith("/word/document.xml")){
+      const lnl = dv.getUint16(lho + 26, true);
+      const lel = dv.getUint16(lho + 28, true);
+      const raw = bytes.subarray(lho + 30 + lnl + lel, lho + 30 + lnl + lel + csize);
+      const data = method === 8 ? window.pako.inflateRaw(new Uint8Array(raw)) : new Uint8Array(raw);
+      const xml = dec.decode(data);
+      return xml.split(/<\/w:p>/).map(p=>{
+        let t = ""; const re = /<w:t[^>]*>([\s\S]*?)<\/w:t>/g; let m;
+        while ((m = re.exec(p))) t += m[1];
+        return t;
+      }).join("\n");
+    }
+    off += 46 + nl + el + cl;
+  }
+  return null;
+}
+$("btn-import").onclick = ()=> $("file-tpl").click();
+$("file-tpl").onchange = ()=>{
+  const f = $("file-tpl").files[0]; if (!f) return;
+  const name = f.name.toLowerCase();
+  if (name.endsWith(".docx")){
+    f.arrayBuffer().then(buf=>{
+      const text = docxToText(new Uint8Array(buf));
+      if (text == null){ toast("docx 解析失败，请复制文本粘贴到模板框"); return; }
+      handleTemplateText(text, f.name);
+    }).catch(e=>toast("读取失败：" + e.message));
+  } else {
+    f.text().then(t=> handleTemplateText(t, f.name)).catch(e=>toast("读取失败：" + e.message));
+  }
+};
+
+/* ---------- 按钮样式读取 ---------- */
+function getBtnStyle(prefix){
+  return {
+    text: $(prefix+"-text").value || "Button",
+    fs: Math.max(4, +$(prefix+"-fs").value || 12),
+    w: Math.max(20, +$(prefix+"-w").value || 100),
+    h: Math.max(12, +$(prefix+"-h").value || 30),
+    bg: $(prefix+"-bg").value,
+    bgAlpha: 100,
+    fg: $(prefix+"-fg").value,
+    fgAlpha: 100,
+    bd: $(prefix+"-bd").value,
+    bdAlpha: 0,
+    bw: Math.max(0, +$(prefix+"-bw").value || 0),
+    shadow: { color: "#000000", alpha: 28, x: 0, y: 4, blur: 8, spread: 0 },
+  };
+}
+function hexToRgbaCss(hex, alpha){
+  const h = String(hex || "").replace("#", "");
+  const n = parseInt(h, 16);
+  const a = Math.max(0, Math.min(100, alpha || 0)) / 100;
+  if (isNaN(n) || h.length !== 6) return `rgba(0,0,0,${a})`;
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+function getBtnLayout(){
+  const agree = getBtnStyle("ag"), decline = getBtnStyle("de");
+  const manual = $("sel-pos").value === "manual";
+  const W = 595, H = 842;
+  if (!manual){
+    const gap = 12, total = agree.w + gap + decline.w;
+    const x0 = (W - total) / 2;
+    return { manual:false, W, H, agree:{...agree, x:x0}, decline:{...decline, x:x0 + agree.w + gap} };
+  }
+  return {
+    manual:true, W, H,
+    agree:{ ...agree, x: Math.max(0,+$("ag-x").value||0), yTop: Math.max(0,+$("ag-y").value||0) },
+    decline:{ ...decline, x: Math.max(0,+$("de-x").value||0), yTop: Math.max(0,+$("de-y").value||0) },
+  };
+}
+function hexToRgbLib(hex){
+  const n = parseInt(hex.slice(1), 16);
+  return window.PDFLib.rgb(((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255);
+}
+
+/* ---------- 封面预览 ---------- */
+function renderPreview(){
+  const content = currentContent();
+  const allPs = paragraphs(content.legal).concat(paragraphs(content.agree));
+  const lay = getBtnLayout();
+  const btnCss = (b, abs)=>{
+    const pos = abs ? `position:absolute;left:${b.x}px;top:${b.yTop}px;` : "";
+    const shadow = b.shadow ? `box-shadow:${b.shadow.x}px ${b.shadow.y}px ${b.shadow.blur}px ${b.shadow.spread}px ${hexToRgbaCss(b.shadow.color, b.shadow.alpha)};` : "";
+    return `${pos}width:${b.w}px;height:${b.h}px;background:${hexToRgbaCss(b.bg, b.bgAlpha)};color:${hexToRgbaCss(b.fg, b.fgAlpha)};border:${b.bw}px solid ${hexToRgbaCss(b.bd, b.bdAlpha)};font-size:${b.fs}px;${shadow}`;
+  };
+  const buttons = lay.manual
+    ? `<div class="cover-btn abs" style="${btnCss(lay.agree,true)}">${lay.agree.text}</div>
+       <div class="cover-btn abs" style="${btnCss(lay.decline,true)}">${lay.decline.text}</div>`
+    : `<div class="cover-btns"><div class="cover-btn" style="${btnCss(lay.agree,false)}">${lay.agree.text}</div>
+       <div class="cover-btn" style="${btnCss(lay.decline,false)}">${lay.decline.text}</div></div>`;
+  $("cover-preview").innerHTML = `
+    <div class="cover-body">${allPs.map(p=>`<p>${p}</p>`).join("")}</div>
+    ${buttons}`;
+}
+
+/* ---------- 封面 PDF 生成（jsPDF：模板正文 + 按钮视觉） ----------
+ * 按钮视觉直接画进封面内容流（任何阅读器都必定显示）；
+ * pdf-lib 再叠加 Acrobat 可点击的表单层。 */
+function generateCoverPDF(layout){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:"pt", format:"a4" });
+  doc.addFileToVFS("SimHei.ttf", window.SOC_FONT_B64);
+  doc.addFont("SimHei.ttf", "SimHei", "normal");
+  doc.setFont("SimHei", "normal");
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+  const M = 56;
+  let y = 80;
+  const ensure = h => { if (y + h > H - 40){ doc.addPage(); y = 80; } };
+  const para = (str, size) => {
+    doc.setFontSize(size);
+    const lines = doc.splitTextToSize(str, W - M*2);
+    const lh = size * 1.6;
+    ensure(lines.length * lh + 8);
+    doc.setTextColor(31,41,55);
+    doc.text(lines, M, y + size);
+    y += lines.length * lh + 8;
+  };
+  const content = currentContent();
+  paragraphs(content.legal).concat(paragraphs(content.agree)).forEach(p=> para(p, 12));
+  // ---- 绘制按钮视觉（在最后一页 / 手动模式第 1 页） ----
+  const hex2rgb = hex => {
+    const h = String(hex || "").replace("#", "");
+    const n = parseInt(h, 16);
+    if (isNaN(n) || h.length !== 6) return [0,0,0]; // 无效颜色兜底为黑色
+    return [(n>>16)&255, (n>>8)&255, n&255];
+  };
+  const drawBtn = (st, x, yTop) => {
+    const [br,bg,bb] = hex2rgb(st.bg);
+    const [fr,fg,fb] = hex2rgb(st.fg);
+    const [dr,dg,db] = hex2rgb(st.bd);
+    if (st.shadow && st.shadow.alpha > 0){
+      const [sr,sg,sb] = hex2rgb(st.shadow.color);
+      doc.setFillColor(sr,sg,sb);
+      doc.setGState(new doc.GState({ opacity: Math.max(0, Math.min(100, st.shadow.alpha))/100 }));
+      doc.roundedRect(x + st.shadow.x, yTop + st.shadow.y, st.w, st.h, 4, 4, "F");
+      doc.setGState(new doc.GState({ opacity: 1 }));
+    }
+    doc.setFillColor(br,bg,bb);
+    doc.setGState(new doc.GState({ opacity: Math.max(0, Math.min(100, st.bgAlpha))/100 }));
+    doc.roundedRect(x, yTop, st.w, st.h, 4, 4, "F");
+    doc.setGState(new doc.GState({ opacity: 1 }));
+    if (st.bw > 0 && st.bdAlpha > 0){
+      doc.setDrawColor(dr,dg,db); doc.setLineWidth(st.bw);
+      doc.setGState(new doc.GState({ opacity: Math.max(0, Math.min(100, st.bdAlpha))/100 }));
+      doc.roundedRect(x, yTop, st.w, st.h, 4, 4, "S");
+      doc.setGState(new doc.GState({ opacity: 1 }));
+    }
+    doc.setFont("SimHei","normal"); doc.setFontSize(st.fs);
+    doc.setTextColor(fr,fg,fb);
+    const tw = doc.getTextWidth(st.text);
+    doc.text(st.text, x + (st.w - tw)/2, yTop + st.h/2 + st.fs*0.35, { baseline:"middle" });
+  };
+  if (layout && layout.manual){
+    doc.setPage(1);
+    drawBtn(layout.agree, layout.agree.x, layout.agree.yTop);
+    drawBtn(layout.decline, layout.decline.x, layout.decline.yTop);
+  } else if (layout){
+    // 自动：当前已是最后一页，按钮居中于底部
+    drawBtn(layout.agree, layout.agree.x, H - 70 - layout.agree.h);
+    drawBtn(layout.decline, layout.decline.x, H - 70 - layout.decline.h);
+  }
+  return doc.output("arraybuffer");
+}
+
+/* ---------- 交互按钮（pdf-lib，样式可调） ---------- */
+async function addStyledButtons(doc, page, layout){
+  const { PDFName, PDFString } = window.PDFLib;
+  doc.registerFontkit(window.fontkit);
+  const b64 = window.SOC_FONT_B64;
+  const bin = atob(b64);
+  const ttf = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) ttf[i] = bin.charCodeAt(i);
+  const font = await doc.embedFont(ttf);
+  const form = doc.getForm();
+  const mk = (name, st, x, yB)=>{
+    const b = form.createButton(name);
+    b.addToPage(st.text, page, {
+      x, y: yB, width: st.w, height: st.h, font,
+      textColor: hexToRgbLib(st.fg), backgroundColor: hexToRgbLib(st.bg),
+      borderColor: hexToRgbLib(st.bd), borderWidth: st.bw,
+    });
+    b.defaultUpdateAppearances(font);
+    const annots = page.node.lookup(PDFName.of("Annots"));
+    const wd = doc.context.lookup(annots.get(annots.size()-1));
+    wd.set(PDFName.of("DA"), PDFString.of(`/SimHei ${st.fs} Tf 0 g`));
+    b.updateAppearances(font, window.PDFLib.defaultButtonAppearanceProvider);
+    return b;
+  };
+  const H = page.getHeight();
+  // 按钮视觉已由 jsPDF 画入封面内容流；此处仅叠加 Acrobat 交互按钮（可点击）
+  if (layout.manual){
+    mk("agree", layout.agree, layout.agree.x, H - layout.agree.yTop - layout.agree.h);
+    mk("delete", layout.decline, layout.decline.x, H - layout.decline.yTop - layout.decline.h);
+  } else {
+    mk("agree", layout.agree, layout.agree.x, 70);
+    mk("delete", layout.decline, layout.decline.x, 70);
+  }
+  const annots = page.node.lookup(PDFName.of("Annots"));
+  const setAct = (fromEnd, action)=> doc.context.lookup(annots.get(annots.size()-1-fromEnd)).set(PDFName.of("A"), action);
+  const agreeAct = document.querySelector('input[name="agree-act"]:checked').value;
+  if (state.uploadedBytes && agreeAct === "gtoe"){
+    const embName = "SOC_Report.pdf";
+    attachReport(doc, state.uploadedBytes, embName); // 自建内嵌结构，确保锁定后被正确加密
+    setAct(1, doc.context.obj({ S:"GoToE", D:[0,"FitH",842], T:{ N: PDFString.of(embName), R:"C" } }));
+  } else if (state.uploadedBytes && agreeAct === "ocg"){
+    const js = "var o=this.getOCGs();if(o){for(var i=0;i<o.length;i++){if(o[i].name=='ReportPages'){o[i].state=true;}}}";
+    setAct(1, doc.context.obj({ S:"JavaScript", JS: PDFString.of(js) }));
+  } else {
+    const js = "app.alert('本封面未附带报告，请联系发布方获取正式报告。');";
+    setAct(1, doc.context.obj({ S:"JavaScript", JS: PDFString.of(js) }));
+  }
+  setAct(0, doc.context.obj({ S:"Named", N:"Close" }));
+}
+
+/* OCG 隐藏报告页（I Agree 显示） */
+async function hidePagesOCG(doc, pages, ocgName){
+  const { PDFName } = window.PDFLib;
+  const ocgRef = doc.context.nextRef();
+  doc.context.assign(ocgRef, doc.context.obj({ Type:"OCG", Name: ocgName }));
+  doc.catalog.set(PDFName.of("OCProperties"), doc.context.obj({
+    OCGs: [ocgRef], D: doc.context.obj({ OFF: [ocgRef], ON: [] })
+  }));
+  pages.forEach(p=> p.node.set(PDFName.of("OC"), ocgRef));
+}
+
+/* =====================================================================
+ * 自定义内嵌报告（在 lockPdf 之前构建，确保内嵌流被加密）
+ * doc.attach() 的内嵌流在保存时才生成，锁定遍历时不存在 → 不会被加密，
+ * 加密文档中混入未加密流会导致 Acrobat 无法打开（GoToE 失效）。
+ * ===================================================================== */
+function attachReport(doc, reportBytes, name){
+  const ctx = doc.context;
+  const { PDFName, PDFString, PDFRawStream } = window.PDFLib;
+  // 1) EF 流：压缩 + /Filter（lockPdf 对带 /Filter 的流加密压缩后字节）
+  const compressed = window.pako.deflate(reportBytes);
+  const efRef = ctx.nextRef();
+  ctx.assign(efRef, PDFRawStream.of(ctx.obj({
+    Type: "EmbeddedFile",
+    Subtype: "application#2Fpdf",
+    Params: ctx.obj({ Size: reportBytes.length }),
+    Filter: "FlateDecode",
+    Length: compressed.length,
+  }), compressed));
+  // 2) Filespec
+  const fsRef = ctx.nextRef();
+  ctx.assign(fsRef, ctx.obj({
+    Type: "Filespec",
+    F: PDFString.of(name),
+    UF: PDFString.of(name),
+    EF: ctx.obj({ F: efRef }),
+    Desc: PDFString.of(name),
+  }));
+  // 3) 加入 /Names /EmbeddedFiles 名称树
+  let names = doc.catalog.get(PDFName.of("Names"));
+  if (!names){
+    names = ctx.obj({ EmbeddedFiles: ctx.obj({ Names: [] }) });
+    doc.catalog.set(PDFName.of("Names"), names);
+  }
+  let ef = names.get(PDFName.of("EmbeddedFiles"));
+  if (!ef){
+    ef = ctx.obj({ Names: [] });
+    names.set(PDFName.of("EmbeddedFiles"), ef);
+  }
+  const nameArr = ef.get(PDFName.of("Names"));
+  nameArr.push(PDFString.of(name)); // PDFArray.push 只接受单个参数，必须分两次
+  nameArr.push(fsRef);
+  return fsRef;
+}
+
+/* =====================================================================
+ * 上锁（无加密密码，仅权限限制）：PDF 标准安全处理器 V=2 / R=3（RC4-128）
+ * 打开无需密码；禁 打印/修改/复制/批注（Acrobat 显示"受限"，与加密口令版等效）
+ * ===================================================================== */
+function lockPdf(doc){
+  const { PDFName, PDFString, PDFHexString, PDFRawStream, PDFContentStream, PDFDict, PDFArray } = window.PDFLib;
+  const md5b = input => {
+    let bin = ""; for (let i=0;i<input.length;i++) bin += String.fromCharCode(input[i]);
+    const raw = window.md5mod.rstrMD5(bin);
+    const out = new Uint8Array(16);
+    for (let i=0;i<16;i++) out[i] = raw.charCodeAt(i) & 0xff;
+    return out;
+  };
+  const rc4 = (key, data) => {
+    const S = new Uint8Array(256); for (let i=0;i<256;i++) S[i]=i;
+    let j=0; for (let i=0;i<256;i++){ j=(j+S[i]+key[i%key.length])&0xff; const t=S[i]; S[i]=S[j]; S[j]=t; }
+    const out = new Uint8Array(data.length); let a=0,b=0;
+    for (let k=0;k<data.length;k++){ a=(a+1)&0xff; b=(b+S[a])&0xff; const t=S[a]; S[a]=S[b]; S[b]=t; out[k]=data[k]^S[(S[a]+S[b])&0xff]; }
+    return out;
+  };
+  const rc4xor = (key, counter, data) => { const k = key.slice(); for (let i=0;i<k.length;i++) k[i] ^= counter; return rc4(k, data); };
+  const concat = (...arrs) => { const t = arrs.reduce((n,a)=>n+a.length,0); const o = new Uint8Array(t); let p=0; for (const a of arrs){ o.set(a,p); p+=a.length; } return o; };
+  const toHex = u8 => { let s=""; for (const x of u8) s += x.toString(16).padStart(2,'0').toUpperCase(); return s; };
+  const PAD = new Uint8Array([0x28,0xBF,0x4E,0x5E,0x4E,0x75,0x8A,0x41,0x64,0x00,0x4E,0x56,0xFF,0xFA,0x01,0x08,0x2E,0x2E,0x00,0xB6,0xD0,0x68,0x3E,0x80,0x2F,0x0C,0xA9,0xFE,0x64,0x53,0x69,0x7A]);
+  const N = 16;
+  const id = new Uint8Array(16);
+  if (window.crypto && crypto.getRandomValues) crypto.getRandomValues(id);
+  else for (let i=0;i<16;i++) id[i] = Math.floor(Math.random()*256);
+  // O（Algorithm 3, R=3）
+  let k1 = md5b(PAD);
+  for (let i=0;i<50;i++) k1 = md5b(k1);
+  const keyO = k1.slice(0, N);
+  let O = rc4(keyO, PAD);
+  for (let i=1;i<=19;i++) O = rc4xor(keyO, i, O);
+  // 文件密钥（Algorithm 2, R=3）
+  const P = 0xFFFFFFFC | 0; // -4：禁 打印/修改/复制/批注
+  const le32 = n => new Uint8Array([n&0xff,(n>>>8)&0xff,(n>>>16)&0xff,(n>>>24)&0xff]);
+  let key = md5b(concat(PAD, O, le32(P), id));
+  for (let i=0;i<50;i++) key = md5b(key.slice(0, N));
+  key = key.slice(0, N);
+  // U（Algorithm 5, R=3）
+  let U = rc4(key, md5b(concat(PAD, id)));
+  for (let i=1;i<=19;i++) U = rc4xor(key, i, U);
+  const Uentry = concat(U, PAD.slice(0,16));
+  // 对象密钥（Algorithm 1, R=3）
+  const objKey = (num, gen) => md5b(concat(key, [num&0xff,(num>>>8)&0xff,(num>>>16)&0xff, gen&0xff,(gen>>>8)&0xff])).slice(0, Math.min(N+5,16));
+
+  // ===== 递归加密：所有字符串（直接/间接）都必须加密 =====
+  const encString = (obj, ok) => {
+    if (obj instanceof PDFString){
+      const bytes = new Uint8Array(obj.value.length);
+      for (let i=0;i<obj.value.length;i++) bytes[i] = obj.value.charCodeAt(i) & 0xff;
+      return PDFHexString.of(toHex(rc4(ok, bytes)));
+    }
+    if (obj instanceof PDFHexString){
+      const hex = obj.value.replace(/[^0-9A-Fa-f]/g, "");
+      const bytes = new Uint8Array(hex.length/2);
+      for (let i=0;i<bytes.length;i++) bytes[i] = parseInt(hex.substr(i*2,2),16);
+      return PDFHexString.of(toHex(rc4(ok, bytes)));
+    }
+    return obj;
+  };
+  const encObj = (obj, ok) => {
+    if (obj instanceof PDFString || obj instanceof PDFHexString) return encString(obj, ok);
+    if (obj instanceof PDFDict){
+      for (const k of obj.keys()) obj.set(k, encObj(obj.get(k), ok));
+      return obj;
+    }
+    if (obj instanceof PDFArray){
+      for (let i=0;i<obj.size();i++) obj.set(i, encObj(obj.get(i), ok));
+      return obj;
+    }
+    return obj;
+  };
+
+  const ctx = doc.context;
+  for (const [ref, obj] of ctx.enumerateIndirectObjects()){
+    const ok = objKey(ref.objectNumber, ref.generationNumber);
+    if (obj instanceof PDFRawStream){
+      let payload = obj.contents;
+      // 无 /Filter 的流：保存时会补压缩，需先自行压缩并标注再加密
+      if (!obj.dict.get(PDFName.of("Filter"))){
+        payload = window.pako.deflate(payload);
+        obj.dict.set(PDFName.of("Filter"), PDFName.of("FlateDecode"));
+      }
+      obj.contents = rc4(ok, payload);
+      encObj(obj.dict, ok);
+    } else if (obj instanceof PDFContentStream){
+      const un = obj.getUnencodedContents();
+      const compressed = window.pako.deflate(un);
+      const dict = obj.dict;
+      if (!dict.get(PDFName.of("Filter"))) dict.set(PDFName.of("Filter"), PDFName.of("FlateDecode"));
+      encObj(dict, ok);
+      ctx.assign(ref, PDFRawStream.of(dict, rc4(ok, compressed)));
+    } else {
+      const newObj = encObj(obj, ok);
+      if (newObj !== obj) ctx.assign(ref, newObj);
+    }
+  }
+  const encRef = ctx.nextRef();
+  ctx.assign(encRef, ctx.obj({
+    Filter: "Standard", V: 2, R: 3, Length: 128,
+    O: PDFHexString.of(toHex(O)), U: PDFHexString.of(toHex(Uentry)), P: P,
+  }));
+  ctx.trailerInfo.Encrypt = encRef;
+  ctx.trailerInfo.ID = [PDFHexString.of(toHex(id)), PDFHexString.of(toHex(id))];
+}
+
+/* ---------- 生成 ---------- */
+$("btn-gen").onclick = async ()=>{
+  if (!window.jspdf || !window.SOC_FONT_B64){ toast("运行库加载失败，请确认 libs/ 与 fonts/ 目录完整"); return; }
+  const content = currentContent();
+  if (!content.legal.trim() && !content.agree.trim()){ toast("请填写模板字段或导入模板（Word / 文本）"); return; }
+  try{
+    const layout = getBtnLayout();
+    const coverBytes = generateCoverPDF(layout);
+    const doc = await window.PDFLib.PDFDocument.load(coverBytes);
+    const coverLastIdx = doc.getPageCount() - 1; // 合并报告页之前先记录封面末页
+    const agreeAct = document.querySelector('input[name="agree-act"]:checked').value;
+    if (state.uploadedBytes && agreeAct === "ocg"){
+      const rep = await window.PDFLib.PDFDocument.load(state.uploadedBytes);
+      const pages = await doc.copyPages(rep, rep.getPageIndices());
+      pages.forEach(p=> doc.addPage(p));
+      await hidePagesOCG(doc, pages, "ReportPages");
+    }
+    const targetPage = layout.manual ? doc.getPage(0) : doc.getPage(coverLastIdx); // 按钮始终在封面页
+    await addStyledButtons(doc, targetPage, layout);
+    if (state.uploadedBytes) lockPdf(doc); // 导入的 PDF（报告）上锁：打开无需密码，禁复制/编辑/打印/批注
+    const bytes = await doc.save({ useObjectStreams: false });
+    const fn = `报告封面_${nowStamp()}.pdf`;
+    download(bytes, fn);
+    toast("封面 PDF 已生成 ✓（用 Adobe Acrobat/Reader 打开体验按钮）");
+  }catch(e){ console.error(e); toast("生成失败：" + e.message); }
+};
+function download(bytes, filename){
+  if (window.socAPI){
+    const u8 = new Uint8Array(bytes);
+    let bin = "";
+    for (let i=0;i<u8.length;i++) bin += String.fromCharCode(u8[i]);
+    window.socAPI.savePdf(filename, btoa(bin)); // 桌面版：系统"另存为"对话框
+    return;
+  }
+  const blob = new Blob([bytes], { type:"application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 600);
+}
+
+/* ---------- 上传报告 ---------- */
+const dz = $("drop-zone"), fi = $("file-report");
+dz.onclick = ()=> fi.click();
+dz.ondragover = e=>{ e.preventDefault(); dz.style.background = "#e3ecff"; };
+dz.ondragleave = ()=> dz.style.background = "";
+dz.ondrop = e=>{ e.preventDefault(); dz.style.background = ""; if (e.dataTransfer.files.length) handleReport(e.dataTransfer.files[0]); };
+fi.onchange = ()=>{ if (fi.files.length) handleReport(fi.files[0]); };
+function handleReport(file){
+  if (!/\.pdf$/i.test(file.name) && file.type !== "application/pdf"){ toast("仅支持 PDF 文件"); return; }
+  state.uploaded = file;
+  file.arrayBuffer().then(buf=>{
+    state.uploadedBytes = new Uint8Array(buf);
+    $("file-name").textContent = file.name;
+    $("file-size").textContent = "(" + (file.size/1024/1024).toFixed(2) + " MB)";
+    $("file-info").classList.add("show");
+    toast("报告文件已上传 ✓");
+  }).catch(e=>toast("读取失败：" + e.message));
+}
+$("file-remove").onclick = ()=>{ state.uploaded = null; state.uploadedBytes = null; fi.value = ""; $("file-info").classList.remove("show"); };
+
+/* ---------- 联动更新 ---------- */
+function updateAll(){
+  const manual = $("sel-pos").value === "manual";
+  ["pos-x1","pos-y1","pos-x2","pos-y2"].forEach(id=> $(id).style.display = manual ? "" : "none");
+  renderPreview();
+}
+["ag-text","ag-fs","ag-w","ag-h","ag-bg","ag-fg","ag-bd","ag-bw",
+ "de-text","de-fs","de-w","de-h","de-bg","de-fg","de-bd","de-bw",
+ "ag-x","ag-y","de-x","de-y","sel-pos"]
+  .forEach(id=> $(id).addEventListener("input", updateAll));
+document.querySelectorAll('input[name="agree-act"]').forEach(r=> r.addEventListener("change", updateAll));
+
+/* ---------- 模板来源切换 ---------- */
+function syncTplSource(){
+  const src = tplSource();
+  $("builtin-box").style.display = src === "builtin" ? "" : "none";
+  $("import-box").style.display = src === "import" ? "" : "none";
+  renderPreview();
+}
+document.querySelectorAll('input[name="tpl-src"]').forEach(r=> r.addEventListener("change", syncTplSource));
+["f-audit-firm","f-audit-short","f-client","f-client-short","f-exam-type","f-system","f-law","f-affiliates"]
+  .forEach(id=> $(id).addEventListener("input", renderPreview));
+document.querySelectorAll('input[name="tpl-lang"]').forEach(r=> r.addEventListener("change", ()=>{ syncBuiltinFieldDefaults(false); renderPreview(); }));
+
+/* ---------- 使用说明 ---------- */
+$("btn-about").onclick = ()=>{
+  $("modal-box").innerHTML = `
+    <h3>📖 使用说明</h3>
+    <ol>
+      <li><b>报告模板</b>：默认使用内置 SOC1 披露函模板，并支持英文版 / 中文版切换；只需填写审计机构、客户公司、鉴证类型、被审系统、管辖法律等字段，正文自动生成；也可切换为导入 Word（.docx）/ .txt / .md 自定义模板。</li>
+      <li><b>调整按钮样式</b>：I Agree / Decline 的文字、字号、宽高、颜色、边框均可调；位置可选自动（内容底部居中）或手动 X / Y（第 1 页，所见即所得），预览实时同步。</li>
+      <li><b>生成封面</b>：可上传正式报告（.pdf，选填）——"I Agree" 打开内嵌报告（KPMG 原版做法）或显示本 PDF 内合并的隐藏报告页；Decline 关闭文档。</li>
+    </ol>
+    <p><strong>按钮原理</strong>：PDF 按钮 = AcroForm 按钮字段（FT=/Btn）+ Widget 注释 + 动作字典 /A。按钮动作需 <b>Adobe Acrobat / Reader</b> 支持。</p>
+    <button class="btn btn-primary close" onclick="document.getElementById('modal').classList.remove('show')">知道了</button>`;
+  $("modal").classList.add("show");
+};
+$("modal").onclick = e=>{ if (e.target.id==="modal") $("modal").classList.remove("show"); };
+
+/* ---------- 启动 ---------- */
+if (window.md5 && window.md5.rstrMD5) window.md5mod = window.md5;
+syncBuiltinFieldDefaults(true);
+syncTplSource();
+</script>
+</body>
+</html>
