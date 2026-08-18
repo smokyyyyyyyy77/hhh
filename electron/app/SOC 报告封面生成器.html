@@ -298,6 +298,8 @@ const BUILTIN_DEFAULTS = {
     system: "Financial Infrastructure Platform System",
     law: "Singapore",
     affiliates: "The Airwallex affiliates are Airwallex (Brasil) Ltda, Airwallex (Canada) International Payment Limited, Airwallex Capital Hong Kong Limited, Airwallex Capital Pty Ltd, Airwallex Capital (Singapore) Pte. Ltd., Airwallex (Cayman) Limited, Airwallex (Hong Kong) Limited, Airwallex (Israel) Ltd, Airwallex Japan K.K., Airwallex (Malaysia) Sdn Bhd., Airwallex (Netherlands) B.V., Airwallex (New Zealand) Limited, Airwallex Pty Ltd, Airwallex Services India Private Limited, Airwallex (Shanghai) Information Technology Co., Ltd., Airwallex (Shanghai) Network Technology Co., Ltd., Airwallex (UK) Limited, Airwallex US, LLC, AWX Lithuania, UAB and UniCard Solution Limited.",
+    agreeText: "I Agree",
+    declineText: "Decline",
   },
   zh: {
     auditFirm: "安永会计师事务所",
@@ -308,6 +310,8 @@ const BUILTIN_DEFAULTS = {
     system: "金融基础设施平台系统",
     law: "新加坡",
     affiliates: "空中云汇关联公司包括：Airwallex (Brasil) Ltda、Airwallex (Canada) International Payment Limited、Airwallex Capital Hong Kong Limited、Airwallex Capital Pty Ltd、Airwallex Capital (Singapore) Pte. Ltd.、Airwallex (Cayman) Limited、Airwallex (Hong Kong) Limited、Airwallex (Israel) Ltd、Airwallex Japan K.K.、Airwallex (Malaysia) Sdn Bhd.、Airwallex (Netherlands) B.V.、Airwallex (New Zealand) Limited、Airwallex Pty Ltd、Airwallex Services India Private Limited、Airwallex (Shanghai) Information Technology Co., Ltd.、Airwallex (Shanghai) Network Technology Co., Ltd.、Airwallex (UK) Limited、Airwallex US, LLC、AWX Lithuania, UAB 以及 UniCard Solution Limited。",
+    agreeText: "同意",
+    declineText: "拒绝",
   }
 };
 const BUILTIN_FIELDS = [
@@ -331,6 +335,9 @@ function syncBuiltinFieldDefaults(force){
     const val = el.value;
     if (force || val === prev[key] || val === "") el.value = next[key];
   });
+  const ag = $("ag-text"), de = $("de-text");
+  if (ag && (force || ag.value === prev.agreeText || ag.value === "")) ag.value = next.agreeText;
+  if (de && (force || de.value === prev.declineText || de.value === "")) de.value = next.declineText;
   lastBuiltinLang = nextLang;
 }
 function builtinContent(){
