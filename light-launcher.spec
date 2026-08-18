@@ -2,7 +2,7 @@
 from pathlib import Path
 
 root = Path.cwd()
-html_path = root / 'electron' / 'app' / '合规报告访问门户生成器.html'
+html_path = root / 'electron' / 'app' / 'SOC 报告封面生成器.html'
 libs_path = root / 'electron' / 'app' / 'libs'
 fonts_path = root / 'electron' / 'app' / 'fonts'
 
@@ -37,7 +37,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='合规报告访问门户生成器-轻量版',
+    name='SOC 报告封面生成器-轻量版',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

@@ -32,16 +32,16 @@ jobs:
       - name: Verify build output
         shell: pwsh
         run: |
-          if (!(Test-Path "dist/合规报告访问门户生成器-轻量版.exe")) {
-            throw "构建结果不存在：dist/合规报告访问门户生成器-轻量版.exe"
+          if (!(Test-Path "dist/SOC 报告封面生成器-轻量版.exe")) {
+            throw "构建结果不存在：dist/SOC 报告封面生成器-轻量版.exe"
           }
-          Get-Item "dist/合规报告访问门户生成器-轻量版.exe" | Format-List FullName,Length,LastWriteTime
+          Get-Item "dist/SOC 报告封面生成器-轻量版.exe" | Format-List FullName,Length,LastWriteTime
 
       - name: Prepare artifact folder
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
-          Copy-Item "dist/合规报告访问门户生成器-轻量版.exe" "release/合规报告访问门户生成器-轻量版.exe"
+          Copy-Item "dist/SOC 报告封面生成器-轻量版.exe" "release/SOC 报告封面生成器-轻量版.exe"
           if (Test-Path "发布版/使用说明.txt") {
             Copy-Item "发布版/使用说明.txt" "release/使用说明.txt"
           }
@@ -49,7 +49,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
-          name: 合规报告访问门户生成器-轻量版-windows
+          name: SOC-报告封面生成器-轻量版-windows
           path: release/*
           if-no-files-found: error
 
@@ -58,5 +58,5 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/合规报告访问门户生成器-轻量版.exe
+            release/SOC 报告封面生成器-轻量版.exe
             release/使用说明.txt

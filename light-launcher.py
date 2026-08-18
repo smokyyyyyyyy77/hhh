@@ -6,11 +6,11 @@ import sys
 import webbrowser
 from pathlib import Path
 
-APP_NAME = "合规报告访问门户生成器"
+APP_NAME = "SOC 报告封面生成器"
 ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
 WEB_ROOT = ROOT / "electron" / "app" if (ROOT / "electron" / "app").exists() else ROOT
 WEB_ITEMS = [
-    "合规报告访问门户生成器.html",
+    "SOC 报告封面生成器.html",
     "libs",
     "fonts",
 ]
@@ -72,7 +72,7 @@ def extract_web() -> Path:
 def main() -> int:
     try:
         out_dir = extract_web()
-        index = out_dir / "合规报告访问门户生成器.html"
+        index = out_dir / "SOC 报告封面生成器.html"
         webbrowser.open(index.resolve().as_uri())
         return 0
     except Exception as exc:

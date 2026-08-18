@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>合规报告访问门户生成器</title>
+<title>SOC 报告封面生成器</title>
 <style>
   :root{
     --blue:#00338D; --dark:#00205B; --ink:#1f2430; --muted:#6b7280;
@@ -96,13 +96,13 @@
 <body>
 
 <header class="topbar">
-  <div class="logo">合规报告访问门户生成器<small>导入模板 · 封面生成</small></div>
+  <div class="logo">SOC 报告封面生成器<small>导入模板 · 封面生成</small></div>
   <div class="spacer"></div>
   <a href="javascript:void(0)" id="btn-about">使用说明</a>
 </header>
 
 <main>
-  <h1 class="page-title">合规报告访问门户生成器</h1>
+  <h1 class="page-title">SOC 报告封面生成器</h1>
   <p class="page-sub">填写字段生成 SOC1 披露函封面（或导入自定义模板）→ 调整 I Agree / Decline 按钮样式 → 生成封面 PDF（可内嵌正式报告）。</p>
 
   <!-- 1. 报告模板 -->
@@ -124,6 +124,11 @@
         <div class="field"><label>鉴证类型</label><input id="f-exam-type" value="SOC 1 Type 2"></div>
         <div class="field"><label>被审系统描述</label><input id="f-system" value="Financial Infrastructure Platform System"></div>
         <div class="field"><label>适用法律 / 管辖地</label><input id="f-law" value="Singapore"></div>
+      </div>
+      <div class="radio-row" style="margin-top:10px">
+        <b style="font-size:13px">内置模板语言：</b>
+        <label><input type="radio" name="tpl-lang" value="en" checked>英文版</label>
+        <label><input type="radio" name="tpl-lang" value="zh">中文版</label>
       </div>
       <div class="field" style="margin-top:10px"><label>关联公司清单（可选，将作为页脚注释）</label>
         <textarea id="f-affiliates" rows="3">The Airwallex affiliates are Airwallex (Brasil) Ltda, Airwallex (Canada) International Payment Limited, Airwallex Capital Hong Kong Limited, Airwallex Capital Pty Ltd, Airwallex Capital (Singapore) Pte. Ltd., Airwallex (Cayman) Limited, Airwallex (Hong Kong) Limited, Airwallex (Israel) Ltd, Airwallex Japan K.K., Airwallex (Malaysia) Sdn Bhd., Airwallex (Netherlands) B.V., Airwallex (New Zealand) Limited, Airwallex Pty Ltd, Airwallex Services India Private Limited, Airwallex (Shanghai) Information Technology Co., Ltd., Airwallex (Shanghai) Network Technology Co., Ltd., Airwallex (UK) Limited, Airwallex US, LLC, AWX Lithuania, UAB and UniCard Solution Limited.</textarea>
@@ -215,7 +220,7 @@
   </div>
 </main>
 
-<footer>合规报告访问门户生成器 · 按钮动作需 Adobe Acrobat / Reader 支持</footer>
+<footer>SOC 报告封面生成器 · 按钮动作需 Adobe Acrobat / Reader 支持</footer>
 
 <div class="modal-mask" id="modal"><div class="modal" id="modal-box"></div></div>
 <div class="toast" id="toast"></div>
@@ -229,7 +234,7 @@
 <script>
 "use strict";
 /* =====================================================================
- * 合规报告访问门户生成器（精简版）
+ * SOC 报告封面生成器（精简版）
  * 导入模板（Word/txt/md）→ 调整 I Agree/Decline 按钮样式 → 生成封面 PDF
  * 封面 100% 来自模板正文 + 按钮；无内置版式、无模板库、无报告信息表单
  * 按钮 = AcroForm 按钮字段(FT=/Btn) + /A 动作（/GoToE 内嵌报告 / JS 显示 OCG 隐藏页 / /Close）
@@ -239,7 +244,7 @@
 const state = { uploaded: null, uploadedBytes: null, tplLegal: "", tplAgree: "" };
 
 /* ---------- 内置 SOC1 披露函模板 ---------- */
-const SOC1_TMPL_LEGAL = `{{auditFirm}} (“{{auditShort}}”) has prepared the attached report (the “Report”) for the sole benefit and use of {{client}} (collectively referred to as “{{clientShort}}”), and, for limited purposes in accordance with the requirements of the American Institute of Certified Public Accountants (“AICPA”) and the International Auditing and Assurance Standards Board (“IAASB”), {{clientShort}}’s existing clients and their auditors. In addition, certain prospective clients, identified by {{clientShort}} (collectively, each a “Recipient”), may have access to the Report subject to the terms of this agreement.
+const SOC1_TMPL_EN = `{{auditFirm}} (“{{auditShort}}”) has prepared the attached report (the “Report”) for the sole benefit and use of {{client}} (collectively referred to as “{{clientShort}}”), and, for limited purposes in accordance with the requirements of the American Institute of Certified Public Accountants (“AICPA”) and the International Auditing and Assurance Standards Board (“IAASB”), {{clientShort}}’s existing clients and their auditors. In addition, certain prospective clients, identified by {{clientShort}} (collectively, each a “Recipient”), may have access to the Report subject to the terms of this agreement.
 
 Your access to the Report is subject to your agreement, on behalf of yourself and the Recipient, to the terms and conditions set forth below. Please read them carefully.
 
@@ -261,19 +266,87 @@ By clicking on the “I ACCEPT” button below, you signify that you and the Rec
 
 7. This agreement shall be governed by, and construed in accordance with, the laws of {{law}} applicable to agreements made and fully to be performed therein by residents thereof.`;
 
+const SOC1_TMPL_ZH = `{{auditFirm}}（“{{auditShort}}”）已编制随附报告（简称“本报告”），仅供 {{client}} 使用和受益（以下统称“{{clientShort}}”）。此外，根据美国注册会计师协会（“AICPA”）及国际审计与鉴证准则理事会（“IAASB”）的相关要求，在有限目的范围内，{{clientShort}} 的现有客户及其审计师亦可查阅本报告。经 {{clientShort}} 指定的某些潜在客户（以下各称“接收方”）也可在遵守本协议条款的前提下获得本报告的访问权限。
+
+您访问本报告，即表示您代表您本人及接收方同意接受以下条款与条件的约束。请仔细阅读。
+
+点击下方 “I ACCEPT” 按钮，即表示您和接收方同意受本等条款和条件约束。该等接受与同意应视为与您代表您本人及接收方作出的书面签署具有同等法律效力，并应视为满足任何适用法律对书面形式的要求，尽管本协议系以电子形式书写并接受。除下文另有规定外，严禁向 {{clientShort}} 之外的任何人士分发或披露本报告的任何部分，或其中包含的任何信息或建议。
+
+1. {{auditShort}} 受 {{clientShort}} 委托，按照 AICPA 和 IAASB 制定的鉴证标准，就 {{clientShort}} 的 {{system}} 控制执行 {{examType}} 鉴证，以实现 {{clientShort}} 系统说明中列示的相关控制目标（以下简称 “SOC 1 业务”）。接收方已要求 {{clientShort}} 向其提供 {{auditShort}} 就该业务出具的本报告副本。
+
+2. 该等服务及本报告仅为 {{clientShort}}、其客户及其审计师的利益和使用而实施和编制，并非为任何其他目的而设，包括 {{clientShort}} 潜在客户的使用。{{auditShort}} 未就服务的充分性或本报告向接收方作出任何陈述或保证。若 {{auditShort}} 受聘执行额外服务或程序，则可能会注意到其他事项，并可能在本报告中予以反映。
+
+3. 该等服务并不构成：（a）按照 AICPA 和 IAASB 公认审计准则进行的财务报表审计、审阅或检查；（b）按照适用专业准则进行的预测性财务报表检查；或（c）为发现舞弊或违法行为，或测试对任何司法辖区法律法规遵守情况而执行的程序。
+
+4. 接收方：（a）不取得针对 {{auditShort}}、{{auditShort}} 全球网络中的任何其他成员所，或其各自关联方、合伙人、代理人、代表或员工（以下统称“{{auditShort}} 各方”）的任何权利，且 {{auditShort}} 对接收方就该等服务或其访问本报告不承担任何义务或责任；（b）不得依赖本报告；（c）不得主张适用法律的任何规定可使本协议任何条款无效或失效。
+
+{{affiliates}}
+
+5. 除非法律程序强制要求（在此情况下，接收方应及时通知 {{auditShort}}，以便 {{auditShort}} 寻求适当保护），否则接收方不得以口头或书面形式向任何第三方披露本报告或其任何部分，也不得在任何公开文件或对第三方的沟通中提及 {{auditShort}}。
+
+6. 接收方（代表其自身及其继受人和受让人）特此免除 {{auditShort}} 各方因本报告、接收方对本报告的访问，或 {{auditShort}} 执行该等服务而产生或与之相关的一切索赔或诉因。接收方应就以下事项引起或相关的全部索赔、责任、损失及费用，对 {{auditShort}} 各方作出赔偿、抗辩并使其免受损害：（a）接收方或其代表违反本协议；和/或（b）任何直接或间接从接收方处、通过接收方或应其要求获得本报告访问权限的一方，对本报告的任何使用或依赖。
+
+7. 本协议受 {{law}} 法律管辖并依其解释，该等法律适用于由当地居民订立并完全履行的协议。`;
+
+const BUILTIN_DEFAULTS = {
+  en: {
+    auditFirm: "Ernst & Young LLP",
+    auditShort: "EY",
+    client: "Airwallex (Singapore) Pte. Ltd. and its affiliates",
+    clientShort: "Airwallex",
+    examType: "SOC 1 Type 2",
+    system: "Financial Infrastructure Platform System",
+    law: "Singapore",
+    affiliates: "The Airwallex affiliates are Airwallex (Brasil) Ltda, Airwallex (Canada) International Payment Limited, Airwallex Capital Hong Kong Limited, Airwallex Capital Pty Ltd, Airwallex Capital (Singapore) Pte. Ltd., Airwallex (Cayman) Limited, Airwallex (Hong Kong) Limited, Airwallex (Israel) Ltd, Airwallex Japan K.K., Airwallex (Malaysia) Sdn Bhd., Airwallex (Netherlands) B.V., Airwallex (New Zealand) Limited, Airwallex Pty Ltd, Airwallex Services India Private Limited, Airwallex (Shanghai) Information Technology Co., Ltd., Airwallex (Shanghai) Network Technology Co., Ltd., Airwallex (UK) Limited, Airwallex US, LLC, AWX Lithuania, UAB and UniCard Solution Limited.",
+  },
+  zh: {
+    auditFirm: "安永会计师事务所",
+    auditShort: "安永",
+    client: "空中云汇（新加坡）私人有限公司及其关联公司",
+    clientShort: "空中云汇",
+    examType: "SOC 1 第二类报告",
+    system: "金融基础设施平台系统",
+    law: "新加坡",
+    affiliates: "空中云汇关联公司包括：Airwallex (Brasil) Ltda、Airwallex (Canada) International Payment Limited、Airwallex Capital Hong Kong Limited、Airwallex Capital Pty Ltd、Airwallex Capital (Singapore) Pte. Ltd.、Airwallex (Cayman) Limited、Airwallex (Hong Kong) Limited、Airwallex (Israel) Ltd、Airwallex Japan K.K.、Airwallex (Malaysia) Sdn Bhd.、Airwallex (Netherlands) B.V.、Airwallex (New Zealand) Limited、Airwallex Pty Ltd、Airwallex Services India Private Limited、Airwallex (Shanghai) Information Technology Co., Ltd.、Airwallex (Shanghai) Network Technology Co., Ltd.、Airwallex (UK) Limited、Airwallex US, LLC、AWX Lithuania, UAB 以及 UniCard Solution Limited。",
+  }
+};
+const BUILTIN_FIELDS = [
+  ["f-audit-firm", "auditFirm"],
+  ["f-audit-short", "auditShort"],
+  ["f-client", "client"],
+  ["f-client-short", "clientShort"],
+  ["f-exam-type", "examType"],
+  ["f-system", "system"],
+  ["f-law", "law"],
+  ["f-affiliates", "affiliates"],
+];
+let lastBuiltinLang = "en";
+function builtinLang(){ return (document.querySelector('input[name="tpl-lang"]:checked') || {}).value || "en"; }
+function syncBuiltinFieldDefaults(force){
+  const prev = BUILTIN_DEFAULTS[lastBuiltinLang] || BUILTIN_DEFAULTS.en;
+  const nextLang = builtinLang();
+  const next = BUILTIN_DEFAULTS[nextLang] || BUILTIN_DEFAULTS.en;
+  BUILTIN_FIELDS.forEach(([id, key])=>{
+    const el = $(id); if (!el) return;
+    const val = el.value;
+    if (force || val === prev[key] || val === "") el.value = next[key];
+  });
+  lastBuiltinLang = nextLang;
+}
 function builtinContent(){
   const v = id => ($(id) || {}).value || "";
+  const defs = BUILTIN_DEFAULTS[builtinLang()] || BUILTIN_DEFAULTS.en;
   const map = {
-    "{{auditFirm}}": v("f-audit-firm") || "Ernst & Young LLP",
-    "{{auditShort}}": v("f-audit-short") || "EY",
-    "{{client}}": v("f-client") || "Airwallex (Singapore) Pte. Ltd. and its affiliates",
-    "{{clientShort}}": v("f-client-short") || "Airwallex",
-    "{{examType}}": v("f-exam-type") || "SOC 1 Type 2",
-    "{{system}}": v("f-system") || "Financial Infrastructure Platform System",
-    "{{law}}": v("f-law") || "Singapore",
-    "{{affiliates}}": (v("f-affiliates") || "").trim(),
+    "{{auditFirm}}": v("f-audit-firm") || defs.auditFirm,
+    "{{auditShort}}": v("f-audit-short") || defs.auditShort,
+    "{{client}}": v("f-client") || defs.client,
+    "{{clientShort}}": v("f-client-short") || defs.clientShort,
+    "{{examType}}": v("f-exam-type") || defs.examType,
+    "{{system}}": v("f-system") || defs.system,
+    "{{law}}": v("f-law") || defs.law,
+    "{{affiliates}}": (v("f-affiliates") || defs.affiliates).trim(),
   };
-  let t = SOC1_TMPL_LEGAL;
+  let t = (builtinLang() === "zh" ? SOC1_TMPL_ZH : SOC1_TMPL_EN);
   for (const k in map) t = t.split(k).join(map[k]);
   return { legal: t, agree: "" };
 }
@@ -802,13 +875,14 @@ function syncTplSource(){
 document.querySelectorAll('input[name="tpl-src"]').forEach(r=> r.addEventListener("change", syncTplSource));
 ["f-audit-firm","f-audit-short","f-client","f-client-short","f-exam-type","f-system","f-law","f-affiliates"]
   .forEach(id=> $(id).addEventListener("input", renderPreview));
+document.querySelectorAll('input[name="tpl-lang"]').forEach(r=> r.addEventListener("change", ()=>{ syncBuiltinFieldDefaults(false); renderPreview(); }));
 
 /* ---------- 使用说明 ---------- */
 $("btn-about").onclick = ()=>{
   $("modal-box").innerHTML = `
     <h3>📖 使用说明</h3>
     <ol>
-      <li><b>报告模板</b>：默认使用内置 SOC1 披露函模板，只需填写审计机构、客户公司、鉴证类型、被审系统、管辖法律等字段，正文自动生成；也可切换为导入 Word（.docx）/ .txt / .md 自定义模板。</li>
+      <li><b>报告模板</b>：默认使用内置 SOC1 披露函模板，并支持英文版 / 中文版切换；只需填写审计机构、客户公司、鉴证类型、被审系统、管辖法律等字段，正文自动生成；也可切换为导入 Word（.docx）/ .txt / .md 自定义模板。</li>
       <li><b>调整按钮样式</b>：I Agree / Decline 的文字、字号、宽高、颜色、边框均可调；位置可选自动（内容底部居中）或手动 X / Y（第 1 页，所见即所得），预览实时同步。</li>
       <li><b>生成封面</b>：可上传正式报告（.pdf，选填）——"I Agree" 打开内嵌报告（KPMG 原版做法）或显示本 PDF 内合并的隐藏报告页；Decline 关闭文档。</li>
     </ol>
@@ -820,6 +894,7 @@ $("modal").onclick = e=>{ if (e.target.id==="modal") $("modal").classList.remove
 
 /* ---------- 启动 ---------- */
 if (window.md5 && window.md5.rstrMD5) window.md5mod = window.md5;
+syncBuiltinFieldDefaults(true);
 syncTplSource();
 </script>
 </body>

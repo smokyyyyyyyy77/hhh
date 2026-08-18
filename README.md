@@ -1,4 +1,4 @@
-# 合规报告访问门户生成器
+# SOC 报告封面生成器
 
 内置 SOC1 披露函模板（或导入自定义模板）-> 填写字段 / 调整 I Agree / Decline 按钮样式 -> 生成封面 PDF（可内嵌并"上锁"正式报告）。
 
@@ -22,14 +22,14 @@
 4. 把导出的 JSON 发给我，我可以据此把按钮样式固定到正式软件中
 
 ## 当前推荐分发方式
-- Windows 轻量版：由 GitHub Actions 在 Windows runner 上自动构建 `合规报告访问门户生成器-轻量版.exe`
-- 浏览器版：直接打开 `electron/app/合规报告访问门户生成器.html`
+- Windows 轻量版：由 GitHub Actions 在 Windows runner 上自动构建 `SOC 报告封面生成器-轻量版.exe`
+- 浏览器版：直接打开 `electron/app/SOC 报告封面生成器.html`
 - 旧 Electron 版：仅保留历史参考，不再作为首选发布方式
 
 ## 项目结构
 ```text
 soc-report-app/
-|- electron/app/合规报告访问门户生成器.html
+|- electron/app/SOC 报告封面生成器.html
 |- electron/app/libs/
 |- electron/app/fonts/
 |- light-launcher.py
@@ -49,7 +49,7 @@ soc-report-app/
 1. 安装 Python 3.11
 2. 安装 `requirements-light-launcher.txt` 中的依赖
 3. 执行 `pyinstaller --noconfirm light-launcher.spec`
-4. 上传 `合规报告访问门户生成器-轻量版.exe`
+4. 上传 `SOC 报告封面生成器-轻量版.exe`
 
 工作流文件：`.github/workflows/build-windows-light-exe.yml`
 

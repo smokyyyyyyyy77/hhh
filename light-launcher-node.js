@@ -5,8 +5,8 @@ const path = require('path');
 const os = require('os');
 const { spawn } = require('child_process');
 
-const APP_NAME = '合规报告访问门户生成器';
-const WEB_ITEMS = ['合规报告访问门户生成器.html', 'libs', 'fonts'];
+const APP_NAME = 'SOC 报告封面生成器';
+const WEB_ITEMS = ['SOC 报告封面生成器.html', 'libs', 'fonts'];
 const BASE_DIR = process.env.CAXA ? process.env.CAXA : __dirname;
 const WEB_ROOT = fs.existsSync(path.join(BASE_DIR, 'electron', 'app'))
   ? path.join(BASE_DIR, 'electron', 'app')
@@ -77,7 +77,7 @@ function main() {
   for (const item of WEB_ITEMS) {
     syncTree(path.join(WEB_ROOT, item), path.join(outDir, item));
   }
-  openInBrowser(path.join(outDir, '合规报告访问门户生成器.html'));
+  openInBrowser(path.join(outDir, 'SOC 报告封面生成器.html'));
 }
 
 try {
